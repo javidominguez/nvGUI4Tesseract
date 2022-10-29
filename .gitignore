@@ -1,4 +1,5 @@
 *.pyc
 *.bak
 .vscode/*
+bin/*
 .sconsign.dblite
