@@ -62,16 +62,17 @@ class MainFrame(wx.Frame):
 
 		# end wxGlade
 		self.text_ctrl.SetSize(self.Size-(10,80))
-		self.Bind(wx.EVT_MAXIMIZE, self.onMaximize)
+		self.panel.Bind(wx.EVT_SIZE, self.onWindowSize)
 
-	def onMaximize(self, event):
+	def onWindowSize(self, event):
 		self.text_ctrl.SetSize(self.Size-(10,80))
+
 	def onMenuViewPagelist(self, event):  # wxGlade: MainFrame.<event_handler>
 		self.pagelistPanel.Show()
 		x, y = self.Size-self.pagelistPanel.Size-(5,25)
 		self.pagelistPanel.MoveXY(x, y)
 		self.pagelistPanel.SetFocus()
-		event.Skip()
+
 	def onMenuViewRecognized(self, event):  # wxGlade: MainFrame.<event_handler>
 		self.text_ctrl.SetFocus()
 		self.pagelistPanel.Hide()
