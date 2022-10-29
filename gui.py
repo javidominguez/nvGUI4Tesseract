@@ -20,7 +20,7 @@ def _(s):
 class MainFrame(wx.Frame):
 	def __init__(self, *args, **kwds):
 		# begin wxGlade: MainFrame.__init__
-		kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE | wx.FULL_REPAINT_ON_RESIZE | wx.STAY_ON_TOP
+		kwds["style"] = kwds.get("style", 0) | wx.CAPTION | wx.CLOSE_BOX | wx.FULL_REPAINT_ON_RESIZE | wx.ICONIZE | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX | wx.RESIZE_BORDER | wx.STAY_ON_TOP
 		wx.Frame.__init__(self, *args, **kwds)
 		self.SetSize((1000, 800))
 		self.SetMinSize((400, 300))
@@ -30,7 +30,15 @@ class MainFrame(wx.Frame):
 		# Menu Bar
 		self.frame_menubar = wx.MenuBar()
 		wxglade_tmp_menu = wx.Menu()
-		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Close"), _("Closes the application"))
+		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("New... (ctrl+n)"), "")
+		self.Bind(wx.EVT_MENU, self.onMenuFileNew, item)
+		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Open... (ctrl+o)"), "")
+		self.Bind(wx.EVT_MENU, self.onMenuFileOpen, item)
+		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Save... (control+s)"), "")
+		self.Bind(wx.EVT_MENU, self.onMenuFileSave, item)
+		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Save as... (ctrl+shift+s)"), "")
+		self.Bind(wx.EVT_MENU, self.onMenuFileSaveAs, item)
+		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Close (ctrl+q)"), _("Closes the application"))
 		self.Bind(wx.EVT_MENU, self.onMenuClose, item)
 		self.frame_menubar.Append(wxglade_tmp_menu, _("File"))
 		wxglade_tmp_menu = wx.Menu()
@@ -39,6 +47,12 @@ class MainFrame(wx.Frame):
 		wxglade_tmp_menu.Append(2, _("List of pages"), "", wx.ITEM_RADIO)
 		self.Bind(wx.EVT_MENU, self.onMenuViewPagelist, id=2)
 		self.frame_menubar.Append(wxglade_tmp_menu, _("View"))
+		wxglade_tmp_menu = wx.Menu()
+		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Load file (ctrl+f)"), "")
+		self.Bind(wx.EVT_MENU, self.onMenuGetLoad, item)
+		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Digitalize image (ctrl+d)"), "")
+		self.Bind(wx.EVT_MENU, self.onMenuGetDigitalize, item)
+		self.frame_menubar.Append(wxglade_tmp_menu, _("Get"))
 		self.SetMenuBar(self.frame_menubar)
 		# Menu Bar end
 
@@ -69,14 +83,26 @@ class MainFrame(wx.Frame):
 		def hotkey(code, control=False, shift=False, alt=False):
 			return event.GetKeyCode() == code and event.controlDown == control and event.shiftDown == shift and event.altDown == alt
 		if hotkey(81, True): # control+Q
-			self.Close()
-		elif hotkey(345):
+			self.onMenuClose(event)
+		elif hotkey(345): # F6
 			if self.text_ctrl.HasFocus():
 				self.onMenuViewPagelist(event)
 				self.frame_menubar.FindItem(2)[0].Check()
 			elif self.pagelistPanel.list_ctrl.HasFocus():
 				self.onMenuViewRecognized(event)
 				self.frame_menubar.FindItem(1)[0].Check()
+		elif hotkey(78, True): # control+n
+			self.onMenuFileNew(event)
+		elif hotkey(79, True): # control+o
+			self.onMenuFileOpen(event)
+		elif hotkey(83, True): # control+s
+			self.onMenuFileSave(event)
+		elif hotkey(83, True, True): # control+shift+s
+			self.onMenuFileSaveAs(event)
+		elif hotkey(70, True): # )control+f
+			self.onMenuGetLoad(event)
+		elif hotkey(68, True): # control+d
+			self.onMenuGetDigitalize(event)
 		print(event.GetKeyCode())
 		event.Skip()
 
@@ -87,7 +113,7 @@ class MainFrame(wx.Frame):
 	def onMenuViewPagelist(self, event):  # wxGlade: MainFrame.<event_handler>
 		self.pagelistPanel.Show()
 		x, y = self.Size-self.pagelistPanel.Size-(5,25)
-		self.pagelistPanel.MoveXY(x, y)
+		self.pagelistPanel.Move(x, y)
 		self.pagelistPanel.SetFocus()
 		event.Skip()
 
@@ -98,6 +124,25 @@ class MainFrame(wx.Frame):
 
 	def onMenuClose(self, event):  # wxGlade: MainFrame.<event_handler>
 		self.Close()
+
+	def onMenuFileNew(self, event):  # wxGlade: MainFrame.<event_handler>
+		print("Event handler 'onMenuFileNew' not implemented!")
+		event.Skip()
+	def onMenuFileOpen(self, event):  # wxGlade: MainFrame.<event_handler>
+		print("Event handler 'onMenuFileOpen' not implemented!")
+		event.Skip()
+	def onMenuFileSave(self, event):  # wxGlade: MainFrame.<event_handler>
+		print("Event handler 'onMenuFileSave' not implemented!")
+		event.Skip()
+	def onMenuFileSaveAs(self, event):  # wxGlade: MainFrame.<event_handler>
+		print("Event handler 'onMenuFileSaveAs' not implemented!")
+		event.Skip()
+	def onMenuGetLoad(self, event):  # wxGlade: MainFrame.<event_handler>
+		print("Event handler 'onMenuGetLoad' not implemented!")
+		event.Skip()
+	def onMenuGetDigitalize(self, event):  # wxGlade: MainFrame.<event_handler>
+		print("Event handler 'onMenuGetDigitalize' not implemented!")
+		event.Skip()
 # end of class MainFrame
 
 class DialogPanel(wx.Panel):
