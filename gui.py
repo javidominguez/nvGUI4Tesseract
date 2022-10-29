@@ -34,10 +34,10 @@ class MainFrame(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.onMenuClose, item)
 		self.frame_menubar.Append(wxglade_tmp_menu, _("File"))
 		wxglade_tmp_menu = wx.Menu()
-		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Recognized text"), "", wx.ITEM_RADIO)
-		self.Bind(wx.EVT_MENU, self.onMenuViewRecognized, item)
-		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("List of pages"), "", wx.ITEM_RADIO)
-		self.Bind(wx.EVT_MENU, self.onMenuViewPagelist, item)
+		wxglade_tmp_menu.Append(1, _("Recognized text"), "", wx.ITEM_RADIO)
+		self.Bind(wx.EVT_MENU, self.onMenuViewRecognized, id=1)
+		wxglade_tmp_menu.Append(2, _("List of pages"), "", wx.ITEM_RADIO)
+		self.Bind(wx.EVT_MENU, self.onMenuViewPagelist, id=2)
 		self.frame_menubar.Append(wxglade_tmp_menu, _("View"))
 		self.SetMenuBar(self.frame_menubar)
 		# Menu Bar end
@@ -63,20 +63,39 @@ class MainFrame(wx.Frame):
 		# end wxGlade
 		self.text_ctrl.SetSize(self.Size-(10,80))
 		self.panel.Bind(wx.EVT_SIZE, self.onWindowSize)
+		self.Bind(wx.EVT_CHAR_HOOK, self.onKey)
+
+	def onKey(self, event):
+		def hotkey(code, control=False, shift=False, alt=False):
+			return event.GetKeyCode() == code and event.controlDown == control and event.shiftDown == shift and event.altDown == alt
+		if hotkey(81, True): # control+Q
+			self.Close()
+		elif hotkey(345):
+			if self.text_ctrl.HasFocus():
+				self.onMenuViewPagelist(event)
+				self.frame_menubar.FindItem(2)[0].Check()
+			elif self.pagelistPanel.list_ctrl.HasFocus():
+				self.onMenuViewRecognized(event)
+				self.frame_menubar.FindItem(1)[0].Check()
+		print(event.GetKeyCode())
+		event.Skip()
 
 	def onWindowSize(self, event):
 		self.text_ctrl.SetSize(self.Size-(10,80))
+		event.Skip()
 
 	def onMenuViewPagelist(self, event):  # wxGlade: MainFrame.<event_handler>
 		self.pagelistPanel.Show()
 		x, y = self.Size-self.pagelistPanel.Size-(5,25)
 		self.pagelistPanel.MoveXY(x, y)
 		self.pagelistPanel.SetFocus()
+		event.Skip()
 
 	def onMenuViewRecognized(self, event):  # wxGlade: MainFrame.<event_handler>
 		self.text_ctrl.SetFocus()
 		self.pagelistPanel.Hide()
 		event.Skip()
+
 	def onMenuClose(self, event):  # wxGlade: MainFrame.<event_handler>
 		self.Close()
 # end of class MainFrame
