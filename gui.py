@@ -22,10 +22,9 @@ def _(s):
 class MainFrame(wx.Frame):
 	def __init__(self, *args, **kwds):
 		# begin wxGlade: MainFrame.__init__
-		kwds["style"] = kwds.get("style", 0) | wx.CAPTION | wx.CLOSE_BOX | wx.FULL_REPAINT_ON_RESIZE | wx.ICONIZE | wx.MAXIMIZE_BOX | wx.MINIMIZE_BOX | wx.RESIZE_BORDER | wx.STAY_ON_TOP
+		kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE | wx.FULL_REPAINT_ON_RESIZE | wx.STAY_ON_TOP
 		wx.Frame.__init__(self, *args, **kwds)
 		self.SetSize((1000, 800))
-		self.SetMinSize((400, 300))
 		self.SetTitle(_("TesseractOCR"))
 
 		self.pagelistPanel = DialogPanel(parent=self)
@@ -70,7 +69,8 @@ class MainFrame(wx.Frame):
 		sizer = wx.StaticBoxSizer(wx.StaticBox(self.panel, wx.ID_ANY, ""), wx.VERTICAL)
 
 		self.text_ctrl = wx.TextCtrl(self.panel, wx.ID_ANY, "", style=wx.TE_MULTILINE | wx.TE_READONLY | wx.TE_RICH)
-		sizer.Add(self.text_ctrl, 0, wx.EXPAND | wx.SHAPED, 0)
+		self.text_ctrl.SetMinSize((800, 600))
+		sizer.Add(self.text_ctrl, 0, wx.EXPAND, 0)
 
 		self.panel.SetSizer(sizer)
 
@@ -90,7 +90,7 @@ class MainFrame(wx.Frame):
 			if self.text_ctrl.HasFocus():
 				self.onMenuViewPagelist(event)
 				self.frame_menubar.FindItem(2)[0].Check()
-			elif self.pagelistPanel.list_ctrl.HasFocus():
+			elif self.pagelistPanel.list_box.HasFocus():
 				self.onMenuViewRecognized(event)
 				self.frame_menubar.FindItem(1)[0].Check()
 		elif hotkey(78, True): # control+n
@@ -148,8 +148,15 @@ class MainFrame(wx.Frame):
 		wildcard = "",
 		style = wx.FD_OPEN)
 		if dlg.ShowModal() == wx.ID_OK:
-			doc.load(dlg.Path)
+			r = doc.loadImage(dlg.Path)
 		dlg.Destroy()
+		if r:
+			self.text_ctrl.SetValue(_("Recognition failed\n\n")+r.decode("ansi"))
+			print(r)
+		else:
+			self.text_ctrl.SetValue(doc.pagelist[-1].recognized)
+			self.pagelistPanel.list_box.Append(doc.pagelist[-1].name)
+
 		event.Skip()
 	def onMenuGetDigitalize(self, event):  # wxGlade: MainFrame.<event_handler>
 		print("Event handler 'onMenuGetDigitalize' not implemented!")
@@ -168,11 +175,8 @@ class DialogPanel(wx.Panel):
 		label = wx.StaticText(self, wx.ID_ANY, _("Document Pages"))
 		sizer.Add(label, 0, 0, 0)
 
-		self.list_ctrl = wx.ListCtrl(self, wx.ID_ANY, style=wx.LC_HRULES | wx.LC_REPORT | wx.LC_VRULES)
-		self.list_ctrl.AppendColumn(_("A"), format=wx.LIST_FORMAT_LEFT, width=-1)
-		self.list_ctrl.AppendColumn(_("B"), format=wx.LIST_FORMAT_LEFT, width=-1)
-		self.list_ctrl.AppendColumn(_("C"), format=wx.LIST_FORMAT_LEFT, width=-1)
-		sizer.Add(self.list_ctrl, 1, wx.EXPAND, 0)
+		self.list_box = wx.ListBox(self, wx.ID_ANY, choices=[])
+		sizer.Add(self.list_box, 0, 0, 0)
 
 		self.SetSizer(sizer)
 		sizer.Fit(self)
