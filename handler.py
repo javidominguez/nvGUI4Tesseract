@@ -17,17 +17,17 @@ class DocumentHandler():
 		self.flagBussy = False
 		self.pagelist = []
 		self.pageIndex = 0
-		self.documentPath = self.__randomizePath()
+		self.documentPath = os.path.join(os.environ["temp"], "tesseract-"+self.__randomizePath())
 		os.mkdir(self.documentPath)
 
 	def __randomizePath(self):
-		folder = "tesseract-"
+		folder = ""
 		for i in range (16):
 			folder = folder+choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-		return os.path.join(os.environ["temp"], folder)
+		return folder
 
-	def loadImage(self, filepath):
-		name = os.path.split(filepath)[-1]
+	def recognize(self, filepath, name=None):
+		if not name: name = os.path.split(filepath)[-1]
 		command = "{exe} \"{filein}\" \"{fileout}\" --dpi 150 --psm 1 --oem 3 -c tessedit_do_invert=0 quiet".format(
 			exe = config["binaries"]["tesseract"],
 			filein = filepath,
@@ -45,5 +45,24 @@ class DocumentHandler():
 		text = "\n".join(filter(lambda l: len(l.replace(" ", ""))>1, text))
 		self.pagelist.append(Page(name, filepath, text.encode("ansi")))
 		self.flagModified = True
+
+	def digitalize(self):
+		outputFile = os.path.join(self.documentPath, "image-"+self.__randomizePath()+".jpg")
+		command = "{} /w 0 /h 0 /dpi {} /color {} /format JPG /output {}".format(
+			config["binaries"]["wia-cmd-scanner"],
+			config["scanner"]["resolution"],
+			config["scanner"]["color"],
+			outputFile
+		)
+		print(command)
+		si = subprocess.STARTUPINFO()
+		si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+		p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=si)
+		stdout, stderr = p.communicate()
+		if not os.path.exists(outputFile): return stdout
+		return self.recognize(outputFile, _("Digitalized image {color} {ppp}").format(
+			color = config["scanner"]["color"],
+			ppp = config["scanner"]["resolution"]
+		))
 
 doc = DocumentHandler()

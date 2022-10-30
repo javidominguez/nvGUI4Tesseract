@@ -7,7 +7,7 @@ defaultConfig = {
 		"xpdf-tools": r".\bin\xpdf-tools\pdftopng.exe"
 	},
 	"scanner": {
-		"color": "grayscale",
+		"color": "GRAY",
 		"resolution": "150"
 	}
 }

@@ -148,7 +148,7 @@ class MainFrame(wx.Frame):
 		wildcard = "",
 		style = wx.FD_OPEN)
 		if dlg.ShowModal() == wx.ID_OK:
-			r = doc.loadImage(dlg.Path)
+			r = doc.recognize(dlg.Path)
 		dlg.Destroy()
 		if r:
 			self.text_ctrl.SetValue(_("Recognition failed\n\n")+r.decode("ansi"))
@@ -156,10 +156,16 @@ class MainFrame(wx.Frame):
 		else:
 			self.text_ctrl.SetValue(doc.pagelist[-1].recognized)
 			self.pagelistPanel.list_box.Append(doc.pagelist[-1].name)
-
 		event.Skip()
+
 	def onMenuGetDigitalize(self, event):  # wxGlade: MainFrame.<event_handler>
-		print("Event handler 'onMenuGetDigitalize' not implemented!")
+		r = doc.digitalize()
+		if r:
+			self.text_ctrl.SetValue(_("Recognition failed\n\n")+r.decode("ansi"))
+			print(r)
+		else:
+			self.text_ctrl.SetValue(doc.pagelist[-1].recognized)
+			self.pagelistPanel.list_box.Append(doc.pagelist[-1].name)
 		event.Skip()
 # end of class MainFrame
 
