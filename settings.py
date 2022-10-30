@@ -5,11 +5,15 @@ defaultConfig = {
 		"tesseract": r".\bin\tesseract\tesseract.exe",
 		"wia-cmd-scanner": r".\bin\wia-cmd-scanner\wia-cmd-scanner.exe",
 		"xpdf-tools": r".\bin\xpdf-tools\pdftopng.exe"
+	},
+	"scanner": {
+		"color": "grayscale",
+		"resolution": "150"
 	}
 }
 
 def getConfig():
-	config = ConfigObj("tesseracOCR-miniGUI.ini")
+	config = ConfigObj("TesseractOCR-miniGUI.ini")
 	flag = False
 	for section in defaultConfig:
 		if section not in config:

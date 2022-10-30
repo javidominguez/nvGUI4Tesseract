@@ -5,6 +5,8 @@
 #
 
 import wx
+import os
+from handler import doc
 
 # begin wxGlade: dependencies
 import gettext
@@ -24,7 +26,7 @@ class MainFrame(wx.Frame):
 		wx.Frame.__init__(self, *args, **kwds)
 		self.SetSize((1000, 800))
 		self.SetMinSize((400, 300))
-		self.SetTitle(_("TesseracOCR"))
+		self.SetTitle(_("TesseractOCR"))
 
 		self.pagelistPanel = DialogPanel(parent=self)
 		# Menu Bar
@@ -138,7 +140,16 @@ class MainFrame(wx.Frame):
 		print("Event handler 'onMenuFileSaveAs' not implemented!")
 		event.Skip()
 	def onMenuGetLoad(self, event):  # wxGlade: MainFrame.<event_handler>
-		print("Event handler 'onMenuGetLoad' not implemented!")
+		dlg = wx.FileDialog(
+		parent = self,
+		message = _("Load image"),
+		defaultDir = os.environ["homepath"],
+		defaultFile = "",
+		wildcard = "",
+		style = wx.FD_OPEN)
+		if dlg.ShowModal() == wx.ID_OK:
+			doc.load(dlg.Path)
+		dlg.Destroy()
 		event.Skip()
 	def onMenuGetDigitalize(self, event):  # wxGlade: MainFrame.<event_handler>
 		print("Event handler 'onMenuGetDigitalize' not implemented!")
