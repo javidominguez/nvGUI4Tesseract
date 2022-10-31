@@ -1,6 +1,9 @@
 from configobj import ConfigObj
 
 defaultConfig = {
+	"general": {
+		"showsettings": 1
+	},
 	"binaries": {
 		"tesseract": r".\bin\tesseract\tesseract.exe",
 		"wia-cmd-scanner": r".\bin\wia-cmd-scanner\wia-cmd-scanner.exe",

@@ -6,7 +6,7 @@
 
 import wx
 import os
-from handler import doc
+from handler import *
 
 # begin wxGlade: dependencies
 import gettext
@@ -19,6 +19,58 @@ def _(s):
 # end wxGlade
 
 
+
+class ScanSettingsDialog(wx.Dialog):
+	def __init__(self, *args, **kwds):
+		# begin wxGlade: ScanSettingsDialog.__init__
+		kwds["style"] = kwds.get("style", 0)
+		wx.Dialog.__init__(self, *args, **kwds)
+		self.SetTitle(_("Scanner Settings"))
+
+		sizerOptions = wx.BoxSizer(wx.VERTICAL)
+
+		sizer1 = wx.BoxSizer(wx.HORIZONTAL)
+		sizerOptions.Add(sizer1, 1, wx.EXPAND, 0)
+
+		self.radioBoxColor = wx.RadioBox(self, wx.ID_ANY, _("Color"), choices=[_("RGB color"), _("Gray scale"), _("Black and white")], majorDimension=1, style=wx.RA_SPECIFY_COLS)
+		self.radioBoxColor.SetSelection(0)
+		self.radioBoxColor.SetSelection(["RGB","GRAY","BW"].index(config["scanner"]["color"]))
+		sizer1.Add(self.radioBoxColor, 0, 0, 0)
+
+		self.radioBoxPPP = wx.RadioBox(self, wx.ID_ANY, _("Resolution"), choices=[_("100"), _("150"), _("300")], majorDimension=1, style=wx.RA_SPECIFY_COLS)
+		self.radioBoxPPP.SetSelection(0)
+		self.radioBoxPPP.SetStringSelection(config["scanner"]["resolution"])
+		sizer1.Add(self.radioBoxPPP, 0, 0, 0)
+
+		sizer2 = wx.BoxSizer(wx.VERTICAL)
+		sizerOptions.Add(sizer2, 1, wx.EXPAND, 0)
+
+		self.checkbox = wx.CheckBox(self, wx.ID_ANY, _("Show this dialog every time a page is scanned?"))
+		self.checkbox.SetValue(bool(int(config["general"]["showsettings"])))
+		sizer2.Add(self.checkbox, 0, 0, 0)
+
+		sizerButtons = wx.StdDialogButtonSizer()
+		sizerOptions.Add(sizerButtons, 0, wx.ALL, 4)
+
+		self.button_OK = wx.Button(self, wx.ID_OK, "")
+		self.button_OK.SetDefault()
+		sizerButtons.AddButton(self.button_OK)
+
+		self.button_CANCEL = wx.Button(self, wx.ID_CANCEL, "")
+		sizerButtons.AddButton(self.button_CANCEL)
+
+		sizerButtons.Realize()
+
+		self.SetSizer(sizerOptions)
+		sizerOptions.Fit(self)
+
+		self.SetAffirmativeId(self.button_OK.GetId())
+		self.SetEscapeId(self.button_CANCEL.GetId())
+
+		self.Layout()
+		# end wxGlade
+
+# end of class ScanSettingsDialog
 class MainFrame(wx.Frame):
 	def __init__(self, *args, **kwds):
 		# begin wxGlade: MainFrame.__init__
@@ -39,6 +91,8 @@ class MainFrame(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.onMenuFileSave, item)
 		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Save as... (ctrl+shift+s)"), "")
 		self.Bind(wx.EVT_MENU, self.onMenuFileSaveAs, item)
+		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Settings"), "")
+		self.Bind(wx.EVT_MENU, self.onMenuSettings, item)
 		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Close (ctrl+q)"), _("Closes the application"))
 		self.Bind(wx.EVT_MENU, self.onMenuClose, item)
 		self.frame_menubar.Append(wxglade_tmp_menu, _("File"))
@@ -159,6 +213,8 @@ class MainFrame(wx.Frame):
 		event.Skip()
 
 	def onMenuGetDigitalize(self, event):  # wxGlade: MainFrame.<event_handler>
+		if bool(int(config["general"]["showsettings"])):
+			if not self.onMenuSettings(event): return
 		r = doc.digitalize()
 		if r:
 			self.text_ctrl.SetValue(_("Recognition failed\n\n")+r.decode("ansi"))
@@ -167,6 +223,19 @@ class MainFrame(wx.Frame):
 			self.text_ctrl.SetValue(doc.pagelist[-1].recognized)
 			self.pagelistPanel.list_box.Append(doc.pagelist[-1].name)
 		event.Skip()
+	def onMenuSettings(self, event):  # wxGlade: MainFrame.<event_handler>
+		dlg = ScanSettingsDialog(parent=self)
+		if dlg.ShowModal() == wx.ID_OK:
+			print ("save configs")
+			config["general"]["showsettings"] = 1 if dlg.checkbox.GetValue() else 0
+			config["scanner"]["color"] = ["RGB","GRAY","BW"][dlg.radioBoxColor.GetSelection()]
+			config["scanner"]["resolution"] = dlg.radioBoxPPP.GetStringSelection()
+			config.write()
+			dlg.Destroy()
+			return True
+		dlg.Destroy()
+		return False
+		# event.Skip()
 # end of class MainFrame
 
 class DialogPanel(wx.Panel):
