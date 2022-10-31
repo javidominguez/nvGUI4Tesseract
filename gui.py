@@ -91,7 +91,9 @@ class MainFrame(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.onMenuFileSave, item)
 		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Save as... (ctrl+shift+s)"), "")
 		self.Bind(wx.EVT_MENU, self.onMenuFileSaveAs, item)
-		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Settings"), "")
+		wxglade_tmp_menu.Append(3, _("Export text (ctrl+x)"), "")
+		self.Bind(wx.EVT_MENU, self.onMenuExport, id=3)
+		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Scan settings"), "")
 		self.Bind(wx.EVT_MENU, self.onMenuSettings, item)
 		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Close (ctrl+q)"), _("Closes the application"))
 		self.Bind(wx.EVT_MENU, self.onMenuClose, item)
@@ -110,6 +112,7 @@ class MainFrame(wx.Frame):
 		self.frame_menubar.Append(wxglade_tmp_menu, _("Get"))
 		self.SetMenuBar(self.frame_menubar)
 		# Menu Bar end
+		self.frame_menubar.FindItem(3)[0].Enable(False)
 
 		self.frame_statusbar = self.CreateStatusBar(1)
 		self.frame_statusbar.SetStatusWidths([-1])
@@ -134,6 +137,7 @@ class MainFrame(wx.Frame):
 		self.text_ctrl.SetSize(self.Size-(10,80))
 		self.panel.Bind(wx.EVT_SIZE, self.onWindowSize)
 		self.Bind(wx.EVT_CHAR_HOOK, self.onKey)
+		self.Bind(wx.EVT_TEXT, self.onTextChanges)
 
 	def onKey(self, event):
 		def hotkey(code, control=False, shift=False, alt=False):
@@ -159,7 +163,17 @@ class MainFrame(wx.Frame):
 			self.onMenuGetLoad(event)
 		elif hotkey(68, True): # control+d
 			self.onMenuGetDigitalize(event)
+		elif hotkey(88, True): # control+x
+			if self.frame_menubar.FindItem(3)[0].Enabled:
+				self.onMenuExport(event)
 		print(event.GetKeyCode())
+		event.Skip()
+
+	def onTextChanges(self, event):
+		if doc.pagelist:
+			self.frame_menubar.FindItem(3)[0].Enable(True)
+		else:
+			self.frame_menubar.FindItem(3)[0].Enable(False)
 		event.Skip()
 
 	def onWindowSize(self, event):
@@ -236,6 +250,20 @@ class MainFrame(wx.Frame):
 		dlg.Destroy()
 		return False
 		# event.Skip()
+	def onMenuExport(self, event):  # wxGlade: MainFrame.<event_handler>
+		text = doc.exportText()
+		dlg = wx.FileDialog(
+		parent = self,
+		message = _("Save recognized text"),
+		defaultDir = os.environ["homepath"],
+		defaultFile = "",
+		wildcard = _("Text files|*.txt"),
+		style = wx.FD_SAVE)
+		if dlg.ShowModal() == wx.ID_OK:
+			with open(dlg.Path, "wb") as f:
+				f.write(text)
+		dlg.Destroy()
+		event.Skip()
 # end of class MainFrame
 
 class DialogPanel(wx.Panel):

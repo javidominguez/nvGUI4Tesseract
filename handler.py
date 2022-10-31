@@ -65,4 +65,7 @@ class DocumentHandler():
 			ppp = config["scanner"]["resolution"]
 		))
 
+	def exportText(self):
+		return b'\n'.join([page.recognized for page in self.pagelist])
+
 doc = DocumentHandler()
