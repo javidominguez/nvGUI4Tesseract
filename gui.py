@@ -120,6 +120,7 @@ class MainFrame(wx.Frame):
 		frame_statusbar_fields = [_("frame_statusbar")]
 		for i in range(len(frame_statusbar_fields)):
 			self.frame_statusbar.SetStatusText(frame_statusbar_fields[i], i)
+		self.frame_statusbar.SetStatusText(_("Ready"))
 
 		self.panel = wx.Panel(self, wx.ID_ANY)
 
@@ -138,6 +139,11 @@ class MainFrame(wx.Frame):
 		self.panel.Bind(wx.EVT_SIZE, self.onWindowSize)
 		self.Bind(wx.EVT_CHAR_HOOK, self.onKey)
 		self.Bind(wx.EVT_TEXT, self.onTextChanges)
+		self.pagelistPanel.Bind(wx.EVT_LISTBOX, self.onListItem)
+
+	def onListItem(self, event):
+		self.text_ctrl.SetValue(doc.pagelist[self.pagelistPanel.list_box.GetSelection()].recognized)
+		event.Skip()
 
 	def onKey(self, event):
 		def hotkey(code, control=False, shift=False, alt=False):
@@ -172,8 +178,12 @@ class MainFrame(wx.Frame):
 	def onTextChanges(self, event):
 		if doc.pagelist:
 			self.frame_menubar.FindItem(3)[0].Enable(True)
+			pageindex = [p.recognized for p in doc.pagelist].index(self.text_ctrl.GetValue().encode())+1
+			npages = len(doc.pagelist)
+			self.frame_statusbar.PushStatusText(_("Page {} of {}").format(pageindex, npages))
 		else:
 			self.frame_menubar.FindItem(3)[0].Enable(False)
+			self.frame_statusbar.PushStatusText(_("Ready"))
 		event.Skip()
 
 	def onWindowSize(self, event):
@@ -184,7 +194,7 @@ class MainFrame(wx.Frame):
 		self.pagelistPanel.Show()
 		x, y = self.Size-self.pagelistPanel.Size-(5,25)
 		self.pagelistPanel.Move(x, y)
-		self.pagelistPanel.SetFocus()
+		self.pagelistPanel.list_box.SetFocus()
 		event.Skip()
 
 	def onMenuViewRecognized(self, event):  # wxGlade: MainFrame.<event_handler>
@@ -224,6 +234,8 @@ class MainFrame(wx.Frame):
 		else:
 			self.text_ctrl.SetValue(doc.pagelist[-1].recognized)
 			self.pagelistPanel.list_box.Append(doc.pagelist[-1].name)
+			self.pagelistPanel.list_box.SetSelection(
+			len(self.pagelistPanel.list_box.Items)-1)
 		event.Skip()
 
 	def onMenuGetDigitalize(self, event):  # wxGlade: MainFrame.<event_handler>
@@ -236,6 +248,8 @@ class MainFrame(wx.Frame):
 		else:
 			self.text_ctrl.SetValue(doc.pagelist[-1].recognized)
 			self.pagelistPanel.list_box.Append(doc.pagelist[-1].name)
+			self.pagelistPanel.list_box.SetSelection(
+				len(self.pagelistPanel.list_box.Items)-1)
 		event.Skip()
 	def onMenuSettings(self, event):  # wxGlade: MainFrame.<event_handler>
 		dlg = ScanSettingsDialog(parent=self)
