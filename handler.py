@@ -11,8 +11,15 @@ class Page():
 		self.recognized = recognized
 
 class DocumentHandler():
+	def __del__(self):
+		for folder, subfolders, files in os.walk(self.documentPath):
+			for f in files:
+				os.remove(os.path.join(folder,f))
+		os.rmdir(self.documentPath)
+
 	def __init__(self):
 		self.name = "New document"
+		self.savedPath = ""
 		self.flagModified = False
 		self.flagBussy = False
 		self.pagelist = []
@@ -39,10 +46,10 @@ class DocumentHandler():
 		stdout, stderr = p.communicate()
 		self.flagBussy = False
 		if stderr: return stderr
-		with open(os.path.join(self.documentPath, name+".recognized.txt"), "r") as f:
-			text = f.readlines()
+		with open(os.path.join(self.documentPath, name+".recognized.txt"), "rb") as f:
+			text = f.read().decode("ansi").split("\n")
 		# Suppression of excess blank lines.
-		text = "\n".join(filter(lambda l: len(l.replace(" ", ""))>1, text))
+		text = "\n".join(filter(lambda l: len(l.replace(" ", ""))>0, text))
 		self.pagelist.append(Page(name, filepath, text.encode("ansi")))
 		self.flagModified = True
 
@@ -67,5 +74,11 @@ class DocumentHandler():
 
 	def exportText(self):
 		return b'\n'.join([page.recognized for page in self.pagelist])
+
+	def saveDocument(self, path):
+		print("save document not implemented")
+		print(path)
+		self.savedPath = path
+		self.flagModified = False
 
 doc = DocumentHandler()

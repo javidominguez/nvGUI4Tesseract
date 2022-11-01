@@ -20,6 +20,90 @@ def _(s):
 
 
 
+
+
+class AlertFileExistsDialog(wx.Dialog):
+	def __init__(self, *args, **kwds):
+		# begin wxGlade: AlertFileExistsDialog.__init__
+		kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_DIALOG_STYLE
+		wx.Dialog.__init__(self, *args, **kwds)
+		self.SetTitle(_("Confirm"))
+
+		sizer_1 = wx.BoxSizer(wx.VERTICAL)
+
+		label = wx.StaticText(self, wx.ID_ANY, _("A file with the same name already exists in the specified location; do you want to replace it?"))
+		sizer_1.Add(label, 0, 0, 0)
+
+		sizer_2 = wx.StdDialogButtonSizer()
+		sizer_1.Add(sizer_2, 0, wx.ALIGN_RIGHT | wx.ALL, 4)
+
+		self.button_YES = wx.Button(self, wx.ID_YES, "")
+		self.button_YES.SetDefault()
+		sizer_2.AddButton(self.button_YES)
+
+		self.button_NO = wx.Button(self, wx.ID_NO, "")
+		sizer_2.AddButton(self.button_NO)
+
+		sizer_2.Realize()
+
+		self.SetSizer(sizer_1)
+		sizer_1.Fit(self)
+
+		self.SetAffirmativeId(self.button_YES.GetId())
+		self.SetEscapeId(self.button_NO.GetId())
+
+		self.Layout()
+
+		self.button_NO.Bind(wx.EVT_BUTTON, self.onButtonNO)
+		# end wxGlade
+
+	def onButtonNO(self, event):  # wxGlade: AlertFileExistsDialog.<event_handler>
+		self.Close()
+		event.Skip()
+# end of class AlertFileExistsDialog
+class alertSaveDocumentDialog(wx.Dialog):
+	def __init__(self, *args, **kwds):
+		# begin wxGlade: alertSaveDocumentDialog.__init__
+		kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_DIALOG_STYLE
+		wx.Dialog.__init__(self, *args, **kwds)
+		self.SetTitle(_("Save changes?"))
+
+		sizer = wx.BoxSizer(wx.VERTICAL)
+
+		label = wx.StaticText(self, wx.ID_ANY, "", style=wx.ALIGN_CENTER_HORIZONTAL)
+		label.SetLabelText(_("Do you want to save changes in the document {}").format(doc.name))
+		sizer.Add(label, 0, 0, 0)
+
+		sizerButtons = wx.StdDialogButtonSizer()
+		sizer.Add(sizerButtons, 0, wx.ALIGN_RIGHT | wx.ALL, 4)
+
+		self.button_YES = wx.Button(self, wx.ID_YES, "")
+		self.button_YES.SetDefault()
+		sizerButtons.AddButton(self.button_YES)
+
+		self.button_NO = wx.Button(self, wx.ID_NO, "")
+		sizerButtons.AddButton(self.button_NO)
+
+		self.button_CANCEL = wx.Button(self, wx.ID_CANCEL, "")
+		sizerButtons.AddButton(self.button_CANCEL)
+
+		sizerButtons.Realize()
+
+		self.SetSizer(sizer)
+		sizer.Fit(self)
+
+		self.SetAffirmativeId(self.button_YES.GetId())
+		self.SetEscapeId(self.button_CANCEL.GetId())
+
+		self.Layout()
+
+		self.button_NO.Bind(wx.EVT_BUTTON, self.onButtonNo)
+		# end wxGlade
+
+	def onButtonNo(self, event):  # wxGlade: alertSaveDocumentDialog.<event_handler>
+		self.Hide()
+		event.Skip()
+# end of class alertSaveDocumentDialog
 class ScanSettingsDialog(wx.Dialog):
 	def __init__(self, *args, **kwds):
 		# begin wxGlade: ScanSettingsDialog.__init__
@@ -87,10 +171,10 @@ class MainFrame(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.onMenuFileNew, item)
 		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Open... (ctrl+o)"), "")
 		self.Bind(wx.EVT_MENU, self.onMenuFileOpen, item)
-		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Save... (control+s)"), "")
-		self.Bind(wx.EVT_MENU, self.onMenuFileSave, item)
-		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Save as... (ctrl+shift+s)"), "")
-		self.Bind(wx.EVT_MENU, self.onMenuFileSaveAs, item)
+		wxglade_tmp_menu.Append(4, _("Save... (control+s)"), "")
+		self.Bind(wx.EVT_MENU, self.onMenuFileSave, id=4)
+		wxglade_tmp_menu.Append(5, _("Save as... (ctrl+shift+s)"), "")
+		self.Bind(wx.EVT_MENU, self.onMenuFileSaveAs, id=5)
 		wxglade_tmp_menu.Append(3, _("Export text (ctrl+x)"), "")
 		self.Bind(wx.EVT_MENU, self.onMenuExport, id=3)
 		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Scan settings"), "")
@@ -113,6 +197,8 @@ class MainFrame(wx.Frame):
 		self.SetMenuBar(self.frame_menubar)
 		# Menu Bar end
 		self.frame_menubar.FindItem(3)[0].Enable(False)
+		self.frame_menubar.FindItem(4)[0].Enable(False)
+		self.frame_menubar.FindItem(5)[0].Enable(False)
 
 		self.frame_statusbar = self.CreateStatusBar(1)
 		self.frame_statusbar.SetStatusWidths([-1])
@@ -178,11 +264,16 @@ class MainFrame(wx.Frame):
 	def onTextChanges(self, event):
 		if doc.pagelist:
 			self.frame_menubar.FindItem(3)[0].Enable(True)
+			if doc.flagModified:
+				self.frame_menubar.FindItem(4)[0].Enable(True)
+				self.frame_menubar.FindItem(5)[0].Enable(True)
 			pageindex = [p.recognized for p in doc.pagelist].index(self.text_ctrl.GetValue().encode())+1
 			npages = len(doc.pagelist)
 			self.frame_statusbar.PushStatusText(_("Page {} of {}").format(pageindex, npages))
 		else:
 			self.frame_menubar.FindItem(3)[0].Enable(False)
+			self.frame_menubar.FindItem(4)[0].Enable(False)
+			self.frame_menubar.FindItem(5)[0].Enable(False)
 			self.frame_statusbar.PushStatusText(_("Ready"))
 		event.Skip()
 
@@ -203,7 +294,17 @@ class MainFrame(wx.Frame):
 		event.Skip()
 
 	def onMenuClose(self, event):  # wxGlade: MainFrame.<event_handler>
-		self.Close()
+		if doc.flagModified:
+			dlg = alertSaveDocumentDialog(parent=self)
+			res = dlg.ShowModal()
+			dlg.Destroy()
+			if res == wx.ID_CANCEL:
+				return
+			elif res == wx.ID_YES:
+				self.onMenuFileSave(event)
+			else:
+				self.Close()
+		if not doc.flagModified: self.Close()
 
 	def onMenuFileNew(self, event):  # wxGlade: MainFrame.<event_handler>
 		print("Event handler 'onMenuFileNew' not implemented!")
@@ -211,12 +312,35 @@ class MainFrame(wx.Frame):
 	def onMenuFileOpen(self, event):  # wxGlade: MainFrame.<event_handler>
 		print("Event handler 'onMenuFileOpen' not implemented!")
 		event.Skip()
+
 	def onMenuFileSave(self, event):  # wxGlade: MainFrame.<event_handler>
-		print("Event handler 'onMenuFileSave' not implemented!")
+		if doc.flagModified:
+			if doc.savedPath:
+				doc.saveDocument(doc.documentPath)
+			else:
+				self.onMenuFileSaveAs(event)
 		event.Skip()
+
 	def onMenuFileSaveAs(self, event):  # wxGlade: MainFrame.<event_handler>
-		print("Event handler 'onMenuFileSaveAs' not implemented!")
+		dlg = wx.FileDialog(
+		parent = self,
+		message = _("Save document"),
+		defaultDir = os.environ["homepath"],
+		defaultFile = doc.name+".tes",
+		wildcard = _("TesseractOCR documents|*.tes"),
+		style = wx.FD_SAVE)
+		if dlg.ShowModal() == wx.ID_OK:
+			if os.path.exists(dlg.Path):
+				dlgConfirm = AlertFileExistsDialog(parent=self)
+				r = dlgConfirm.ShowModal()
+				if r  == wx.ID_YES:
+					doc.saveDocument(dlg.Path)
+				dlgConfirm.Destroy()
+			else:
+				doc.saveDocument(dlg.Path)
+		dlg.Destroy()
 		event.Skip()
+
 	def onMenuGetLoad(self, event):  # wxGlade: MainFrame.<event_handler>
 		dlg = wx.FileDialog(
 		parent = self,
@@ -225,6 +349,7 @@ class MainFrame(wx.Frame):
 		defaultFile = "",
 		wildcard = "",
 		style = wx.FD_OPEN)
+		r = None
 		if dlg.ShowModal() == wx.ID_OK:
 			r = doc.recognize(dlg.Path)
 		dlg.Destroy()
@@ -278,6 +403,7 @@ class MainFrame(wx.Frame):
 				f.write(text)
 		dlg.Destroy()
 		event.Skip()
+
 # end of class MainFrame
 
 class DialogPanel(wx.Panel):
