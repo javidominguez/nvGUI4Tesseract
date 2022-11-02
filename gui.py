@@ -13,14 +13,7 @@ import gettext
 # end wxGlade
 
 # begin wxGlade: extracode
-
-def _(s):
-	return s
 # end wxGlade
-
-
-
-
 
 class AlertFileExistsDialog(wx.Dialog):
 	def __init__(self, *args, **kwds):
@@ -339,6 +332,7 @@ class MainFrame(wx.Frame):
 			else:
 				doc.saveDocument(dlg.Path)
 		dlg.Destroy()
+		self.SetTitle("TesseractOCR - {}".format(doc.name))
 		event.Skip()
 
 	def onMenuGetLoad(self, event):  # wxGlade: MainFrame.<event_handler>

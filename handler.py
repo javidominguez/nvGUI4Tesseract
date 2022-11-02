@@ -1,8 +1,13 @@
 from settings import config
 from random import choice
+from zipfile import ZipFile, ZIP_DEFLATED
 import os
 import wx
 import subprocess
+import pickle
+
+def _(s):
+	return s
 
 class Page():
 	def __init__(self, name="", imagefile="", recognized=""):
@@ -34,7 +39,7 @@ class DocumentHandler():
 		return folder
 
 	def recognize(self, filepath, name=None):
-		if not name: name = os.path.split(filepath)[-1]
+		if not name: name = os.path.basename(filepath)
 		command = "{exe} \"{filein}\" \"{fileout}\" --dpi 150 --psm 1 --oem 3 -c tessedit_do_invert=0 quiet".format(
 			exe = config["binaries"]["tesseract"],
 			filein = filepath,
@@ -79,6 +84,17 @@ class DocumentHandler():
 		print("save document not implemented")
 		print(path)
 		self.savedPath = path
+		with ZipFile(path, "w") as z:
+			pagelist = []
+			for page in self.pagelist:
+				filename = os.path.basename(page.imagefile)
+				pagelist.append((page.name, filename, page.recognized))
+				z.write(page.imagefile, filename, compress_type=ZIP_DEFLATED)
+			pickfile = os.path.join(self.documentPath, ".pagelist")
+			with open(pickfile, "wb") as f:
+				pickle.dump(pagelist, f, pickle.HIGHEST_PROTOCOL)
+			z.write(pickfile, ".pagelist", ZIP_DEFLATED)
 		self.flagModified = False
+		self.name = os.path.splitext(os.path.basename(path))[0]
 
 doc = DocumentHandler()
