@@ -80,12 +80,12 @@ class DocumentHandler():
 	def exportText(self):
 		return b'\n'.join([page.recognized for page in self.pagelist])
 
-	def saveDocument(self, path):
+	def save(self, path):
 		self.savedDocumentPath = path
 		with ZipFile(path, "w") as z:
 			pagelist = []
 			for page in self.pagelist:
-				filename = os.path.basename(page.imagefile)
+				filename = self.__randomizePath()+os.path.splitext(os.path.basename(page.imagefile))[1]
 				pagelist.append((page.name, filename, page.recognized))
 				z.write(page.imagefile, filename, compress_type=ZIP_DEFLATED)
 			pickfile = os.path.join(self.tempFiles, ".pagelist")
@@ -101,5 +101,20 @@ class DocumentHandler():
 		self.flagModified = False
 		self.flagBussy = False
 		self.pagelist = []
+		for folder, subfolders, files in os.walk(self.tempFiles):
+			for f in files:
+				os.remove(os.path.join(folder,f))
+
+	def open(self, path):
+		self.reset()
+		with ZipFile(path, "r") as z:
+			z.extractall(self.tempFiles)
+		with open(os.path.join(self.tempFiles, ".pagelist"), "rb") as f:
+			pagelist = pickle.load(f)
+		self.name = os.path.splitext(os.path.basename(path))[0]
+		self.savedDocumentPath = path
+		for page in pagelist:
+			name, file, recognized = page
+			self.pagelist.append(Page(name, os.path.join(self.tempFiles, file), recognized))
 
 doc = DocumentHandler()

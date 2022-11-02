@@ -257,7 +257,7 @@ class MainFrame(wx.Frame):
 		elif hotkey(88, True, True): # control+shift+x
 			if self.frame_menubar.FindItem(3)[0].Enabled:
 				self.onMenuExport(event)
-		print("keycode: {}".format(event.GetKeyCode()))
+		# print("keycode: {}".format(event.GetKeyCode()))
 		event.Skip()
 
 	def onTextChanges(self, event):
@@ -323,13 +323,36 @@ class MainFrame(wx.Frame):
 		event.Skip()
 	
 	def onMenuFileOpen(self, event):  # wxGlade: MainFrame.<event_handler>
-		print("Event handler 'onMenuFileOpen' not implemented!")
+		if doc.flagModified:
+			dlg = alertSaveDocumentDialog(parent=self)
+			res = dlg.ShowModal()
+			dlg.Destroy()
+			if res == wx.ID_CANCEL:
+				event.Skip()
+				return
+			elif res == wx.ID_YES:
+				self.onMenuFileSave(event)
+		dlg = wx.FileDialog(
+		parent = self,
+		message = _("Open document"),
+		defaultDir = os.environ["homepath"],
+		defaultFile = "",
+		wildcard = _("TesseractOCR documents|*.tes"),
+		style = wx.FD_OPEN)
+		if dlg.ShowModal() == wx.ID_OK:
+			doc.open(dlg.Path)
+			if doc.pagelist:
+				self.pagelistPanel.list_box.SetItems([p.name for p in doc.pagelist])
+				self.pagelistPanel.list_box.SetSelection(0)
+				self.text_ctrl.SetValue(doc.pagelist[0].recognized)
+				self.SetTitle("TesseractOCR - {}".format(doc.name))
+		dlg.Destroy()
 		event.Skip()
 
 	def onMenuFileSave(self, event):  # wxGlade: MainFrame.<event_handler>
 		if doc.flagModified:
 			if doc.savedDocumentPath:
-				doc.saveDocument(doc.savedDocumentPath)
+				doc.save(doc.savedDocumentPath)
 				self.SetTitle("TesseractOCR - {}".format(doc.name))
 			else:
 				self.onMenuFileSaveAs(event)
@@ -348,10 +371,10 @@ class MainFrame(wx.Frame):
 				dlgConfirm = AlertFileExistsDialog(parent=self)
 				r = dlgConfirm.ShowModal()
 				if r  == wx.ID_YES:
-					doc.saveDocument(dlg.Path)
+					doc.save(dlg.Path)
 				dlgConfirm.Destroy()
 			else:
-				doc.saveDocument(dlg.Path)
+				doc.save(dlg.Path)
 		dlg.Destroy()
 		self.SetTitle("TesseractOCR - {}".format(doc.name))
 		event.Skip()
