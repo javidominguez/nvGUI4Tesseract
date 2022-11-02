@@ -168,25 +168,29 @@ class MainFrame(wx.Frame):
 		self.Bind(wx.EVT_MENU, self.onMenuFileSave, id=4)
 		wxglade_tmp_menu.Append(5, _("Save as... (ctrl+shift+s)"), "")
 		self.Bind(wx.EVT_MENU, self.onMenuFileSaveAs, id=5)
-		wxglade_tmp_menu.Append(3, _("Export text (ctrl+x)"), "")
-		self.Bind(wx.EVT_MENU, self.onMenuExport, id=3)
+		wxglade_tmp_menu_sub = wx.Menu()
+		item = wxglade_tmp_menu_sub.Append(wx.ID_ANY, _("Recognized text (ctrl+shift+x)"), "")
+		self.Bind(wx.EVT_MENU, self.onMenuExport, item)
+		item = wxglade_tmp_menu_sub.Append(wx.ID_ANY, _("Image"), "")
+		self.Bind(wx.EVT_MENU, self.onMenuExportImage, item)
+		wxglade_tmp_menu.Append(3, _("Export"), wxglade_tmp_menu_sub, "")
 		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Scan settings"), "")
 		self.Bind(wx.EVT_MENU, self.onMenuSettings, item)
 		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Close (ctrl+q)"), _("Closes the application"))
 		self.Bind(wx.EVT_MENU, self.onMenuClose, item)
 		self.frame_menubar.Append(wxglade_tmp_menu, _("File"))
 		wxglade_tmp_menu = wx.Menu()
-		wxglade_tmp_menu.Append(1, _("Recognized text"), "", wx.ITEM_RADIO)
-		self.Bind(wx.EVT_MENU, self.onMenuViewRecognized, id=1)
-		wxglade_tmp_menu.Append(2, _("List of pages"), "", wx.ITEM_RADIO)
-		self.Bind(wx.EVT_MENU, self.onMenuViewPagelist, id=2)
-		self.frame_menubar.Append(wxglade_tmp_menu, _("View"))
-		wxglade_tmp_menu = wx.Menu()
 		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Load file (ctrl+f)"), "")
 		self.Bind(wx.EVT_MENU, self.onMenuGetLoad, item)
 		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Digitalize image (ctrl+d)"), "")
 		self.Bind(wx.EVT_MENU, self.onMenuGetDigitalize, item)
 		self.frame_menubar.Append(wxglade_tmp_menu, _("Get"))
+		wxglade_tmp_menu = wx.Menu()
+		wxglade_tmp_menu.Append(1, _("Recognized text"), "", wx.ITEM_RADIO)
+		self.Bind(wx.EVT_MENU, self.onMenuViewRecognized, id=1)
+		wxglade_tmp_menu.Append(2, _("List of pages"), "", wx.ITEM_RADIO)
+		self.Bind(wx.EVT_MENU, self.onMenuViewPagelist, id=2)
+		self.frame_menubar.Append(wxglade_tmp_menu, _("View"))
 		self.SetMenuBar(self.frame_menubar)
 		# Menu Bar end
 		self.frame_menubar.FindItem(3)[0].Enable(False)
@@ -248,10 +252,10 @@ class MainFrame(wx.Frame):
 			self.onMenuGetLoad(event)
 		elif hotkey(68, True): # control+d
 			self.onMenuGetDigitalize(event)
-		elif hotkey(88, True): # control+x
+		elif hotkey(88, True, True): # control+shift+x
 			if self.frame_menubar.FindItem(3)[0].Enabled:
 				self.onMenuExport(event)
-		print(event.GetKeyCode())
+		print("keycode: {}".format(event.GetKeyCode()))
 		event.Skip()
 
 	def onTextChanges(self, event):
@@ -263,11 +267,13 @@ class MainFrame(wx.Frame):
 			pageindex = [p.recognized for p in doc.pagelist].index(self.text_ctrl.GetValue().encode())+1
 			npages = len(doc.pagelist)
 			self.frame_statusbar.PushStatusText(_("Page {} of {}").format(pageindex, npages))
+			self.SetTitle("TesseractOCR - *{}".format(doc.name))
 		else:
 			self.frame_menubar.FindItem(3)[0].Enable(False)
 			self.frame_menubar.FindItem(4)[0].Enable(False)
 			self.frame_menubar.FindItem(5)[0].Enable(False)
 			self.frame_statusbar.PushStatusText(_("Ready"))
+			self.SetTitle("TesseractOCR - {}".format(doc.name))
 		event.Skip()
 
 	def onWindowSize(self, event):
@@ -308,8 +314,9 @@ class MainFrame(wx.Frame):
 
 	def onMenuFileSave(self, event):  # wxGlade: MainFrame.<event_handler>
 		if doc.flagModified:
-			if doc.savedPath:
-				doc.saveDocument(doc.documentPath)
+			if doc.savedDocumentPath:
+				doc.saveDocument(doc.savedDocumentPath)
+				self.SetTitle("TesseractOCR - {}".format(doc.name))
 			else:
 				self.onMenuFileSaveAs(event)
 		event.Skip()
@@ -398,6 +405,9 @@ class MainFrame(wx.Frame):
 		dlg.Destroy()
 		event.Skip()
 
+	def onMenuExportImage(self, event):  # wxGlade: MainFrame.<event_handler>
+		print("Event handler 'onMenuExportImage' not implemented!")
+		event.Skip()
 # end of class MainFrame
 
 class DialogPanel(wx.Panel):
