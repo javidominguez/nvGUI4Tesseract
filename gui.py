@@ -218,6 +218,8 @@ class MainFrame(wx.Frame):
 		self.Layout()
 
 		# end wxGlade
+
+		self.SetTitle("TesseractOCR - {}".format(doc.name))
 		self.text_ctrl.SetSize(self.Size-(10,80))
 		self.panel.Bind(wx.EVT_SIZE, self.onWindowSize)
 		self.Bind(wx.EVT_CHAR_HOOK, self.onKey)
@@ -306,8 +308,20 @@ class MainFrame(wx.Frame):
 		if not doc.flagModified: self.Close()
 
 	def onMenuFileNew(self, event):  # wxGlade: MainFrame.<event_handler>
-		print("Event handler 'onMenuFileNew' not implemented!")
+		if doc.flagModified:
+			dlg = alertSaveDocumentDialog(parent=self)
+			res = dlg.ShowModal()
+			dlg.Destroy()
+			if res == wx.ID_CANCEL:
+				event.Skip()
+				return
+			elif res == wx.ID_YES:
+				self.onMenuFileSave(event)
+		doc.reset()
+		self.pagelistPanel.list_box.Clear()
+		self.text_ctrl.Clear()
 		event.Skip()
+	
 	def onMenuFileOpen(self, event):  # wxGlade: MainFrame.<event_handler>
 		print("Event handler 'onMenuFileOpen' not implemented!")
 		event.Skip()

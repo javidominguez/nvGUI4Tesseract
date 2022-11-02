@@ -95,4 +95,11 @@ class DocumentHandler():
 		self.flagModified = False
 		self.name = os.path.splitext(os.path.basename(path))[0]
 
+	def reset(self):
+		self.name = "untitled"
+		self.savedDocumentPath = ""
+		self.flagModified = False
+		self.flagBussy = False
+		self.pagelist = []
+
 doc = DocumentHandler()
