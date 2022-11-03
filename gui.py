@@ -263,12 +263,14 @@ class MainFrame(wx.Frame):
 			self.moveToPage(+1)
 		elif hotkey(366, True): # control+pageUp
 			self.moveToPage(-1)
-		print("keycode: {}".format(event.GetKeyCode()))
+		# print("keycode: {}".format(event.GetKeyCode()))
 		event.Skip()
 
 	def moveToPage(self, x):
 		current = self.pagelistPanel.list_box.GetSelection()
-		if current == -1: return
+		if current == -1:
+			nvda.message(_("The document is empty"))
+			return
 		total = len(doc.pagelist)
 		new = current+x
 		if new < 0: new=0
@@ -468,7 +470,14 @@ class MainFrame(wx.Frame):
 		event.Skip()
 
 	def onMenuExportImage(self, event):  # wxGlade: MainFrame.<event_handler>
-		print("Event handler 'onMenuExportImage' not implemented!")
+		dlg = wx.DirDialog(self,
+		_("Choose a folder where to save the document images:"), style=wx.DD_DEFAULT_STYLE)
+		if dlg.ShowModal() == wx.ID_OK:
+			if doc.exportAllImages(dlg.Path):
+				wx.MessageBox(_("Images saved successfully"), _("Succes"))
+			else:
+				wx.MessageBox(_("An error occurred and the images have not been saved"), _("Error"))
+		dlg.Destroy()
 		event.Skip()
 # end of class MainFrame
 

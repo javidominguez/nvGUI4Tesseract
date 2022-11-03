@@ -2,6 +2,7 @@ from settings import config
 from random import choice
 from zipfile import ZipFile, ZIP_DEFLATED
 import os
+import shutil
 import wx
 import subprocess
 import pickle
@@ -116,5 +117,29 @@ class DocumentHandler():
 		for page in pagelist:
 			name, file, recognized = page
 			self.pagelist.append(Page(name, os.path.join(self.tempFiles, file), recognized))
+
+	def exportAllImages(self, path):
+		folder = os.path.join(path, self.name)
+		n = 1
+		while os.path.exists(folder):
+			folder = os.path.join(path, self.name+" ({})".format(n))
+			n = n+1
+		try:
+			os.mkdir(folder)
+		except:
+			return False
+		n = 1
+		for page in self.pagelist:
+			name = "{doc} [{pg}]{ext}".format(
+				doc = self.name,
+				pg = _("page {}").format(n),
+				ext = os.path.splitext(os.path.basename(page.imagefile))[1]
+			)
+			try:
+				shutil.copy(page.imagefile, os.path.join(folder, name))
+			except:
+				return False
+			n = n+1
+		return True
 
 doc = DocumentHandler()
