@@ -6,6 +6,7 @@
 
 import wx
 import os
+import nvdaControllerClient as nvda
 from handler import *
 
 # begin wxGlade: dependencies
