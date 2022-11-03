@@ -172,7 +172,7 @@ class MainFrame(wx.Frame):
 		wxglade_tmp_menu_sub = wx.Menu()
 		item = wxglade_tmp_menu_sub.Append(wx.ID_ANY, _("Recognized text (ctrl+shift+x)"), "")
 		self.Bind(wx.EVT_MENU, self.onMenuExport, item)
-		item = wxglade_tmp_menu_sub.Append(wx.ID_ANY, _("Image"), "")
+		item = wxglade_tmp_menu_sub.Append(wx.ID_ANY, _("Images"), "")
 		self.Bind(wx.EVT_MENU, self.onMenuExportImage, item)
 		wxglade_tmp_menu.Append(3, _("Export"), wxglade_tmp_menu_sub, "")
 		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Scan settings"), "")
@@ -194,6 +194,7 @@ class MainFrame(wx.Frame):
 		self.frame_menubar.Append(wxglade_tmp_menu, _("View"))
 		self.SetMenuBar(self.frame_menubar)
 		# Menu Bar end
+		self.frame_menubar.FindItem(2)[0].Enable(False)
 		self.frame_menubar.FindItem(3)[0].Enable(False)
 		self.frame_menubar.FindItem(4)[0].Enable(False)
 		self.frame_menubar.FindItem(5)[0].Enable(False)
@@ -258,11 +259,28 @@ class MainFrame(wx.Frame):
 		elif hotkey(88, True, True): # control+shift+x
 			if self.frame_menubar.FindItem(3)[0].Enabled:
 				self.onMenuExport(event)
-		# print("keycode: {}".format(event.GetKeyCode()))
+		elif hotkey(367, True): # control+pageDown
+			self.moveToPage(+1)
+		elif hotkey(366, True): # control+pageUp
+			self.moveToPage(-1)
+		print("keycode: {}".format(event.GetKeyCode()))
 		event.Skip()
+
+	def moveToPage(self, x):
+		current = self.pagelistPanel.list_box.GetSelection()
+		if current == -1: return
+		total = len(doc.pagelist)
+		new = current+x
+		if new < 0: new=0
+		if new >= total: new = total-1
+		self.text_ctrl.SetValue(doc.pagelist[new].recognized)
+		self.pagelistPanel.list_box.SetSelection(new)
+		nvda.message(_("Page {} of {}").format(new+1, total))
+
 
 	def onTextChanges(self, event):
 		if doc.pagelist:
+			self.frame_menubar.FindItem(2)[0].Enable(True)
 			self.frame_menubar.FindItem(3)[0].Enable(True)
 			if doc.flagModified:
 				self.frame_menubar.FindItem(4)[0].Enable(True)
@@ -284,6 +302,10 @@ class MainFrame(wx.Frame):
 		event.Skip()
 
 	def onMenuViewPagelist(self, event):  # wxGlade: MainFrame.<event_handler>
+		if not doc.pagelist:
+			nvda.message(_("The document is empty"))
+			event.Skip()
+			return
 		self.pagelistPanel.Show()
 		x, y = self.Size-self.pagelistPanel.Size-(5,25)
 		self.pagelistPanel.Move(x, y)
@@ -321,6 +343,7 @@ class MainFrame(wx.Frame):
 		doc.reset()
 		self.pagelistPanel.list_box.Clear()
 		self.text_ctrl.Clear()
+		self.frame_menubar.FindItem(2)[0].Enable(True)
 		event.Skip()
 	
 	def onMenuFileOpen(self, event):  # wxGlade: MainFrame.<event_handler>
@@ -355,6 +378,7 @@ class MainFrame(wx.Frame):
 			if doc.savedDocumentPath:
 				doc.save(doc.savedDocumentPath)
 				self.SetTitle("TesseractOCR - {}".format(doc.name))
+				nvda.message(_("Document saved"))
 			else:
 				self.onMenuFileSaveAs(event)
 		event.Skip()
