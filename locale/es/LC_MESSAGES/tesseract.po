@@ -1,0 +1,232 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: TesseractOCR-miniGUI\n"
+"POT-Creation-Date: 2022-11-03 21:11+0100\n"
+"PO-Revision-Date: 2022-11-03 21:13+0100\n"
+"Last-Translator: \n"
+"Language-Team: Javi Domínguez\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.2\n"
+"X-Poedit-Basepath: ../../..\n"
+"X-Poedit-SearchPath-0: .\n"
+
+#: gui.py:25
+msgid "Confirm"
+msgstr ""
+
+#: gui.py:29
+msgid ""
+"A file with the same name already exists in the specified location; do you "
+"want to replace it?"
+msgstr ""
+
+#: gui.py:64
+msgid "Save changes?"
+msgstr ""
+
+#: gui.py:69
+msgid "Do you want to save changes in the document {}"
+msgstr ""
+
+#: gui.py:107
+msgid "Scanner Settings"
+msgstr ""
+
+#: gui.py:114
+msgid "Color"
+msgstr ""
+
+#: gui.py:114
+msgid "RGB color"
+msgstr ""
+
+#: gui.py:114
+msgid "Gray scale"
+msgstr ""
+
+#: gui.py:114
+msgid "Black and white"
+msgstr ""
+
+#: gui.py:119
+msgid "Resolution"
+msgstr ""
+
+#: gui.py:119
+msgid "100"
+msgstr ""
+
+#: gui.py:119
+msgid "150"
+msgstr ""
+
+#: gui.py:119
+msgid "300"
+msgstr ""
+
+#: gui.py:127
+msgid "Show this dialog every time a page is scanned?"
+msgstr ""
+
+#: gui.py:159
+msgid "TesseractOCR"
+msgstr ""
+
+#: gui.py:165
+msgid "New... (ctrl+n)"
+msgstr ""
+
+#: gui.py:167
+msgid "Open... (ctrl+o)"
+msgstr ""
+
+#: gui.py:169
+msgid "Save... (control+s)"
+msgstr ""
+
+#: gui.py:171
+msgid "Save as... (ctrl+shift+s)"
+msgstr ""
+
+#: gui.py:174
+msgid "Recognized text (ctrl+shift+x)"
+msgstr ""
+
+#: gui.py:176
+msgid "Images"
+msgstr ""
+
+#: gui.py:178
+msgid "Export"
+msgstr ""
+
+#: gui.py:179
+msgid "Scan settings"
+msgstr ""
+
+#: gui.py:181
+msgid "Close (ctrl+q)"
+msgstr ""
+
+#: gui.py:181
+msgid "Closes the application"
+msgstr ""
+
+#: gui.py:183
+msgid "File"
+msgstr "Archivo"
+
+#: gui.py:185
+msgid "Load file (ctrl+f)"
+msgstr ""
+
+#: gui.py:187
+msgid "Digitalize image (ctrl+d)"
+msgstr ""
+
+#: gui.py:189
+msgid "Get"
+msgstr ""
+
+#: gui.py:191
+msgid "Recognized text"
+msgstr ""
+
+#: gui.py:193
+msgid "List of pages"
+msgstr ""
+
+#: gui.py:195
+msgid "View"
+msgstr ""
+
+#: gui.py:206
+msgid "frame_statusbar"
+msgstr ""
+
+#: gui.py:209 gui.py:299
+msgid "Ready"
+msgstr ""
+
+#: gui.py:273 gui.py:309
+msgid "The document is empty"
+msgstr ""
+
+#: gui.py:281 gui.py:293
+msgid "Page {} of {}"
+msgstr ""
+
+#: gui.py:364
+msgid "Open document"
+msgstr ""
+
+#: gui.py:367 gui.py:395
+msgid "TesseractOCR documents|*.tes"
+msgstr ""
+
+#: gui.py:384
+msgid "Document saved"
+msgstr ""
+
+#: gui.py:392
+msgid "Save document"
+msgstr ""
+
+#: gui.py:413
+msgid "Load image"
+msgstr ""
+
+#: gui.py:423 gui.py:437
+msgid ""
+"Recognition failed\n"
+"\n"
+msgstr ""
+
+#: gui.py:462
+msgid "Save recognized text"
+msgstr ""
+
+#: gui.py:465
+msgid "Text files|*.txt"
+msgstr ""
+
+#: gui.py:475
+msgid "Choose a folder where to save the document images:"
+msgstr ""
+
+#: gui.py:478
+msgid "Images saved successfully"
+msgstr ""
+
+#: gui.py:478
+msgid "Succes"
+msgstr ""
+
+#: gui.py:480
+msgid "An error occurred and the images have not been saved"
+msgstr ""
+
+#: gui.py:480
+msgid "Error"
+msgstr ""
+
+#: gui.py:494
+msgid "Document Pages"
+msgstr ""
+
+#: handler.py:30 handler.py:103
+msgid "untitled"
+msgstr "Sin título"
+
+#: handler.py:79
+#, python-brace-format
+msgid "Digitalized image {color} {ppp}"
+msgstr ""
+
+#: handler.py:138
+msgid "page {}"
+msgstr ""

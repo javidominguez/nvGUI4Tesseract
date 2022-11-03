@@ -7,8 +7,10 @@ import wx
 import subprocess
 import pickle
 
-def _(s):
-	return s
+from l10n import *
+if not language:
+	def _(s):
+		return s
 
 class Page():
 	def __init__(self, name="", imagefile="", recognized=""):
@@ -24,7 +26,7 @@ class DocumentHandler():
 		os.rmdir(self.tempFiles)
 
 	def __init__(self):
-		self.name = "untitled"
+		self.name = _("untitled")
 		self.savedDocumentPath = ""
 		self.flagModified = False
 		self.flagBussy = False
@@ -97,7 +99,7 @@ class DocumentHandler():
 		self.name = os.path.splitext(os.path.basename(path))[0]
 
 	def reset(self):
-		self.name = "untitled"
+		self.name = _("untitled")
 		self.savedDocumentPath = ""
 		self.flagModified = False
 		self.flagBussy = False

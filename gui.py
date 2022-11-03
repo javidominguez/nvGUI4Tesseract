@@ -9,6 +9,11 @@ import os
 import nvdaControllerClient as nvda
 from handler import *
 
+from l10n import *
+if not language:
+	def _(s):
+		return s
+
 # begin wxGlade: dependencies
 import gettext
 # end wxGlade
@@ -514,7 +519,9 @@ class App(wx.App):
 # end of class App
 
 if __name__ == "__main__":
-	gettext.install("app") # replace with the appropriate catalog name
+	# gettext.install("tesseract") # replace with the appropriate catalog name
+	# language = gettext.translation("tesseract", localedir="locale", languages=["es"])
+	# language.install()
 
 	app = App(0)
 	app.MainLoop()
