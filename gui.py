@@ -373,7 +373,7 @@ class MainFrame(wx.Frame):
 		if dlg.ShowModal() == wx.ID_OK:
 			doc.open(dlg.Path)
 			if doc.pagelist:
-				self.pagelistPanel.list_box.SetItems([p.name for p in doc.pagelist])
+				self.pagelistPanel.list_box.SetItems(["{}: {}".format(n+1, p) for n, p in enumerate([p.name for p in doc.pagelist])])
 				self.pagelistPanel.list_box.SetSelection(0)
 				self.text_ctrl.SetValue(doc.pagelist[0].recognized)
 				self.SetTitle("TesseractOCR - {}".format(doc.name))
@@ -428,7 +428,7 @@ class MainFrame(wx.Frame):
 			print(r)
 		else:
 			self.text_ctrl.SetValue(doc.pagelist[-1].recognized)
-			self.pagelistPanel.list_box.Append(doc.pagelist[-1].name)
+			self.pagelistPanel.list_box.Append("{}: {}".format(len(doc.pagelist), doc.pagelist[-1].name))
 			self.pagelistPanel.list_box.SetSelection(
 			len(self.pagelistPanel.list_box.Items)-1)
 		event.Skip()
@@ -442,7 +442,7 @@ class MainFrame(wx.Frame):
 			print(r)
 		else:
 			self.text_ctrl.SetValue(doc.pagelist[-1].recognized)
-			self.pagelistPanel.list_box.Append(doc.pagelist[-1].name)
+			self.pagelistPanel.list_box.Append("{}: {}".format(len(doc.pagelist), doc.pagelist[-1].name))
 			self.pagelistPanel.list_box.SetSelection(
 				len(self.pagelistPanel.list_box.Items)-1)
 		event.Skip()
