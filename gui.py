@@ -21,6 +21,32 @@ import gettext
 # begin wxGlade: extracode
 # end wxGlade
 
+class ListContext(wx.Menu):
+	def __init__(self, parent):
+		super(ListContext, self).__init__()
+		self.parent = parent
+
+		item_remove = wx.MenuItem(self, wx.ID_ANY, _("Remove"))
+		self.Append(item_remove)
+		self.Bind(wx.EVT_MENU, self.action_remove, item_remove)
+
+	def action_remove(self, event):
+		index = self.parent.GetSelection()
+		doc.pagelist.pop(index)
+		doc.flagModified = True
+		self.parent.Clear()
+		self.parent.SetItems(["{}: {}".format(n+1, p) for n, p in enumerate([p.name for p in doc.pagelist])])
+		try:
+			self.parent.SetSelection(index)
+		except:
+			if doc.pagelist:
+				self.parent.SetSelection(len(doc.pagelist)-1)
+			else:
+				self.parent.parent.parent.text_ctrl.SetValue("")
+				self.parent.parent.parent.text_ctrl.SetFocus()
+		self.parent.parent.parent.onListItem(event)
+		event.Skip()
+
 class AlertFileExistsDialog(wx.Dialog):
 	def __init__(self, *args, **kwds):
 		# begin wxGlade: AlertFileExistsDialog.__init__
@@ -234,7 +260,7 @@ class MainFrame(wx.Frame):
 		self.pagelistPanel.Bind(wx.EVT_LISTBOX, self.onListItem)
 
 	def onListItem(self, event):
-		self.text_ctrl.SetValue(doc.pagelist[self.pagelistPanel.list_box.GetSelection()].recognized)
+		if doc.pagelist: self.text_ctrl.SetValue(doc.pagelist[self.pagelistPanel.list_box.GetSelection()].recognized)
 		event.Skip()
 
 	def onKey(self, event):
@@ -488,6 +514,7 @@ class MainFrame(wx.Frame):
 
 class DialogPanel(wx.Panel):
 	def __init__(self, *args, **kwds):
+		self.parent = kwds["parent"]
 		# begin wxGlade: DialogPanel.__init__
 		kwds["style"] = kwds.get("style", 0) | wx.TAB_TRAVERSAL
 		wx.Panel.__init__(self, *args, **kwds)
@@ -499,6 +526,7 @@ class DialogPanel(wx.Panel):
 		sizer.Add(label, 0, 0, 0)
 
 		self.list_box = wx.ListBox(self, wx.ID_ANY, choices=[])
+		self.list_box.parent = self
 		sizer.Add(self.list_box, 0, 0, 0)
 
 		self.SetSizer(sizer)
@@ -507,6 +535,10 @@ class DialogPanel(wx.Panel):
 		self.Layout()
 		# end wxGlade
 
+		self.Bind(wx.EVT_CONTEXT_MENU, self.onListContextMenu, self.list_box)
+
+	def onListContextMenu(self, event):
+		self.list_box.PopupMenu(ListContext(self.list_box), self.list_box.GetPosition())
 # end of class DialogPanel
 
 class App(wx.App):
