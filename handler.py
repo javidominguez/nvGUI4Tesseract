@@ -31,6 +31,7 @@ class DocumentHandler():
 		self.flagModified = False
 		self.flagBussy = False
 		self.pagelist = []
+		self.clipboard = None
 		self.tempFiles = os.path.join(os.environ["temp"], "tesseract-"+self.__randomizePath())
 		os.mkdir(self.tempFiles)
 

@@ -4,3 +4,5 @@
 bin/*
 .sconsign.dblite
 todo.txt
+build/*
+dist/*

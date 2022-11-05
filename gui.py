@@ -34,6 +34,18 @@ class ListContext(wx.Menu):
 		self.Append(item_remove)
 		self.Bind(wx.EVT_MENU, self.action_remove, item_remove)
 
+		if len(doc.pagelist) > 1:
+			item_copy = wx.MenuItem(self, wx.ID_ANY, _("Copy"))
+			self.Append(item_copy)
+
+		if len(doc.pagelist) > 1:
+			item_cut = wx.MenuItem(self, wx.ID_ANY, _("Cut"))
+			self.Append(item_cut)
+
+		if doc.clipboard:
+			item_paste = wx.MenuItem(self, wx.ID_ANY, _("Paste"))
+			self.Append(item_paste)
+
 	def action_remove(self, event):
 		index = self.parent.GetSelection()
 		doc.pagelist.pop(index)
