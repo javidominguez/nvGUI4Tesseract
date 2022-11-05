@@ -68,9 +68,11 @@ class AlertFileExistsDialog(wx.Dialog):
 
 		self.button_YES = wx.Button(self, wx.ID_YES, "")
 		self.button_YES.SetDefault()
+		self.button_YES.SetLabel(_("&Yes"))
 		sizer_2.AddButton(self.button_YES)
 
 		self.button_NO = wx.Button(self, wx.ID_NO, "")
+		self.button_NO.SetLabel(_("&No"))
 		sizer_2.AddButton(self.button_NO)
 
 		sizer_2.Realize()
@@ -108,12 +110,15 @@ class alertSaveDocumentDialog(wx.Dialog):
 
 		self.button_YES = wx.Button(self, wx.ID_YES, "")
 		self.button_YES.SetDefault()
+		self.button_YES.SetLabel(_("&Yes"))
 		sizerButtons.AddButton(self.button_YES)
 
 		self.button_NO = wx.Button(self, wx.ID_NO, "")
+		self.button_NO.SetLabel(_("&No"))
 		sizerButtons.AddButton(self.button_NO)
 
 		self.button_CANCEL = wx.Button(self, wx.ID_CANCEL, "")
+		self.button_CANCEL.SetLabel(_("&Cancel"))
 		sizerButtons.AddButton(self.button_CANCEL)
 
 		sizerButtons.Realize()
@@ -167,9 +172,11 @@ class ScanSettingsDialog(wx.Dialog):
 
 		self.button_OK = wx.Button(self, wx.ID_OK, "")
 		self.button_OK.SetDefault()
+		self.button_OK.SetLabel(_("&OK"))
 		sizerButtons.AddButton(self.button_OK)
 
 		self.button_CANCEL = wx.Button(self, wx.ID_CANCEL, "")
+		self.button_CANCEL.SetLabel(_("&Cancel"))
 		sizerButtons.AddButton(self.button_CANCEL)
 
 		sizerButtons.Realize()
