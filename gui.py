@@ -37,14 +37,17 @@ class ListContext(wx.Menu):
 		if len(doc.pagelist) > 1:
 			item_copy = wx.MenuItem(self, wx.ID_ANY, _("Copy"))
 			self.Append(item_copy)
+			self.Bind(wx.EVT_MENU, self.action_copy, item_copy)
 
 		if len(doc.pagelist) > 1:
 			item_cut = wx.MenuItem(self, wx.ID_ANY, _("Cut"))
 			self.Append(item_cut)
+			self.Bind(wx.EVT_MENU, self.action_cut, item_cut)
 
 		if doc.clipboard:
 			item_paste = wx.MenuItem(self, wx.ID_ANY, _("Paste"))
 			self.Append(item_paste)
+			self.Bind(wx.EVT_MENU, self.action_paste, item_paste)
 
 	def action_remove(self, event):
 		index = self.parent.GetSelection()
@@ -60,6 +63,28 @@ class ListContext(wx.Menu):
 			else:
 				self.parent.parent.parent.text_ctrl.SetValue("")
 				self.parent.parent.parent.text_ctrl.SetFocus()
+		self.parent.parent.parent.onListItem(event)
+		event.Skip()
+
+	def action_copy(self, event):
+		doc.clipboard = (self.parent.GetSelection(), False)
+		event.Skip()
+
+	def action_cut(self, event):
+		doc.clipboard = (self.parent.GetSelection(), True)
+		event.Skip()
+
+	def action_paste(self, event):
+		index, remove = doc.clipboard
+		page = doc.pagelist[index]
+		if remove: doc.pagelist.pop(index)
+		index = self.parent.GetSelection()
+		doc.pagelist.insert(index, page)
+		doc.clipboard = None
+		doc.flagModified = True
+		self.parent.Clear()
+		self.parent.SetItems(["{}: {}".format(n+1, p) for n, p in enumerate([p.name for p in doc.pagelist])])
+		self.parent.SetSelection(index)
 		self.parent.parent.parent.onListItem(event)
 		event.Skip()
 
@@ -361,7 +386,7 @@ class MainFrame(wx.Frame):
 			pageindex = [p.recognized for p in doc.pagelist].index(self.text_ctrl.GetValue().encode())+1
 			npages = len(doc.pagelist)
 			self.frame_statusbar.PushStatusText(_("Page {} of {}").format(pageindex, npages))
-			self.SetTitle("TesseractOCR - *{}".format(doc.name))
+			if doc.flagModified: self.SetTitle("TesseractOCR - *{}".format(doc.name))
 		else:
 			self.frame_menubar.FindItem(3)[0].Enable(False)
 			self.frame_menubar.FindItem(4)[0].Enable(False)
