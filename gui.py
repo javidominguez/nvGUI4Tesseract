@@ -30,9 +30,15 @@ class ListContext(wx.Menu):
 		super(ListContext, self).__init__()
 		self.parent = parent
 
-		item_remove = wx.MenuItem(self, wx.ID_ANY, _("Remove"))
-		self.Append(item_remove)
-		self.Bind(wx.EVT_MENU, self.action_remove, item_remove)
+		if doc.pagelist and self.parent.GetSelection() > 0:
+			item_moveUp = wx.MenuItem(self, wx.ID_ANY, _("Move up"))
+			self.Append(item_moveUp)
+			self.Bind(wx.EVT_MENU, self.action_moveUp, item_moveUp)
+
+		if doc.pagelist and self.parent.GetSelection() < len(self.parent.Items)-1:
+			item_moveDown = wx.MenuItem(self, wx.ID_ANY, _("Move down"))
+			self.Append(item_moveDown)
+			self.Bind(wx.EVT_MENU, self.action_moveDown, item_moveDown)
 
 		if len(doc.pagelist) > 1:
 			item_copy = wx.MenuItem(self, wx.ID_ANY, _("Copy"))
@@ -49,10 +55,14 @@ class ListContext(wx.Menu):
 			self.Append(item_paste)
 			self.Bind(wx.EVT_MENU, self.action_paste, item_paste)
 
+		item_remove = wx.MenuItem(self, wx.ID_ANY, _("Remove"))
+		self.Append(item_remove)
+		self.Bind(wx.EVT_MENU, self.action_remove, item_remove)
+
 	def action_remove(self, event):
 		index = self.parent.GetSelection()
 		doc.pagelist.pop(index)
-		doc.flagModified = True
+		doc.flagModified = True if doc.pagelist else False
 		self.parent.Clear()
 		self.parent.SetItems(["{}: {}".format(n+1, p) for n, p in enumerate([p.name for p in doc.pagelist])])
 		try:
@@ -64,6 +74,18 @@ class ListContext(wx.Menu):
 				self.parent.parent.parent.text_ctrl.SetValue("")
 				self.parent.parent.parent.text_ctrl.SetFocus()
 		self.parent.parent.parent.onListItem(event)
+		event.Skip()
+
+	def action_moveUp(self, event):
+		self.action_cut(event)
+		self.parent.SetSelection(self.parent.GetSelection()-1)
+		self.action_paste(event)
+		event.Skip()
+
+	def action_moveDown(self, event):
+		self.action_cut(event)
+		self.parent.SetSelection(self.parent.GetSelection()+1)
+		self.action_paste(event)
 		event.Skip()
 
 	def action_copy(self, event):
@@ -427,7 +449,8 @@ class MainFrame(wx.Frame):
 				self.onMenuFileSave(event)
 			else:
 				self.Close()
-		if not doc.flagModified: self.Close()
+		else:
+			self.Close()
 
 	def onMenuFileNew(self, event):  # wxGlade: MainFrame.<event_handler>
 		if doc.flagModified:

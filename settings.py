@@ -16,7 +16,7 @@ defaultConfig = {
 }
 
 def getConfig():
-	config = ConfigObj("TesseractOCR-miniGUI.ini")
+	config = ConfigObj("TesseractOCR.ini")
 	flag = False
 	for section in defaultConfig:
 		if section not in config:

@@ -6,3 +6,4 @@ bin/*
 todo.txt
 build/*
 dist/*
+/TesseractOCR.ini
