@@ -1,11 +1,18 @@
 @echo off
-::
-:: WX Python https://pypi.org/project/wxPython/
+echo.
+echo WX Python https://pypi.org/project/wxPython/
+pause
 pip install wxpython
-::
-:: configobj https://github.com/DiffSK/configobj
-:: configobj documentation https://configobj.readthedocs.io/en/latest/
+pause
+echo.
+echo configobj https://github.com/DiffSK/configobj
+echo configobj documentation https://configobj.readthedocs.io/en/latest/
+pause
 pip install configobj
-::
-:: cx_Freeze https://marcelotduarte.github.io/cx_Freeze
+pause
+echo.
+echo cx_Freeze https://marcelotduarte.github.io/cx_Freeze
+pause
 pip install cx_Freeze 
+echo.
+echo Ready

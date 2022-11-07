@@ -12,6 +12,17 @@ if not language:
 	def _(s):
 		return s
 
+def getTesseractLanguage():
+	command = "{} --list-langs".format(config["binaries"]["tesseract"])
+	si = subprocess.STARTUPINFO()
+	si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+	p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=si)
+	stdout, stderr = p.communicate()
+	availableLanguages = stdout.decode("ansi").split("\r\n")[1:]
+	if lancode in languages: return languages[lancode] if languages[lancode] in availableLanguages else "eng"
+	return "eng"
+tesseractLanguage = getTesseractLanguage()
+
 class Page():
 	def __init__(self, name="", imagefile="", recognized=""):
 		self.name = name
@@ -44,10 +55,11 @@ class DocumentHandler():
 	def recognize(self, filepath, name=None):
 		if not name: name = os.path.basename(filepath)
 		recogfile = os.path.join(self.tempFiles, "recognized"+self.__randomizePath())
-		command = "{exe} \"{filein}\" \"{fileout}\" --dpi 150 --psm 1 --oem 3 -c tessedit_do_invert=0 quiet".format(
+		command = "{exe} \"{filein}\" \"{fileout}\" --dpi 150 --psm 1 --oem 3 -c tessedit_do_invert=0 -l {lng} quiet".format(
 			exe = config["binaries"]["tesseract"],
 			filein = filepath,
-			fileout = recogfile
+			fileout = recogfile,
+			lng = tesseractLanguage
 		)
 		si = subprocess.STARTUPINFO()
 		si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
@@ -70,7 +82,6 @@ class DocumentHandler():
 			config["scanner"]["color"],
 			outputFile
 		)
-		print(command)
 		si = subprocess.STARTUPINFO()
 		si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 		p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=si)
