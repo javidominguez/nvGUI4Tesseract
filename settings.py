@@ -1,5 +1,10 @@
 from configobj import ConfigObj
 
+appname = "TesseractOCR"
+author = "Javi Domínguez"
+version = "1.0A"
+url = "www.github.com/javidominguez/tesseractOCR-miniGUI"
+
 defaultConfig = {
 	"general": {
 		"showsettings": 1

@@ -12,13 +12,22 @@ if not language:
 	def _(s):
 		return s
 
+def decode(string):
+	if isinstance(string, str): return string
+	if isinstance(string, bytes):
+		try:
+			string = string.decode("utf8")
+		except UnicodeDecodeError:
+			string = string.decode("ansi")
+	return string
+
 def getTesseractLanguage():
 	command = "{} --list-langs".format(config["binaries"]["tesseract"])
 	si = subprocess.STARTUPINFO()
 	si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 	p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=si)
 	stdout, stderr = p.communicate()
-	availableLanguages = stdout.decode("ansi").split("\r\n")[1:]
+	availableLanguages = decode(stdout).split("\r\n")[1:]
 	if lancode in languages: return languages[lancode] if languages[lancode] in availableLanguages else "eng"
 	return "eng"
 tesseractLanguage = getTesseractLanguage()
@@ -65,7 +74,7 @@ class DocumentHandler():
 		si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 		p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=si)
 		stdout, stderr = p.communicate()
-		if stderr: return stderr
+		if stderr: return decode(stderr)
 		with open(recogfile+".txt", "rb") as f:
 			text = f.read().decode("ansi").split("\n")
 		# Suppression of excess blank lines.
