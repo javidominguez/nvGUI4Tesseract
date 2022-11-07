@@ -40,7 +40,7 @@ class DocumentHandler():
 		self.name = _("untitled")
 		self.savedDocumentPath = ""
 		self.flagModified = False
-		self.flagBussy = False
+		self.flagStopScan = False
 		self.pagelist = []
 		self.clipboard = None
 		self.tempFiles = os.path.join(os.environ["temp"], "tesseract-"+self.__randomizePath())
@@ -65,7 +65,6 @@ class DocumentHandler():
 		si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 		p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=si)
 		stdout, stderr = p.communicate()
-		self.flagBussy = False
 		if stderr: return stderr
 		with open(recogfile+".txt", "rb") as f:
 			text = f.read().decode("ansi").split("\n")
@@ -86,6 +85,10 @@ class DocumentHandler():
 		si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 		p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=si)
 		stdout, stderr = p.communicate()
+		if self.flagStopScan:
+			self.flagModified = False
+			self.flagStopScan = False
+			return b"Cancelled by user"
 		if not os.path.exists(outputFile): return stdout
 		return self.recognize(outputFile, _("Digitalized image {color} {ppp}").format(
 			color = config["scanner"]["color"],
@@ -114,7 +117,7 @@ class DocumentHandler():
 		self.name = _("untitled")
 		self.savedDocumentPath = ""
 		self.flagModified = False
-		self.flagBussy = False
+		self.flagStopScan = False
 		self.pagelist = []
 		for folder, subfolders, files in os.walk(self.tempFiles):
 			for f in files:

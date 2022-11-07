@@ -11,6 +11,8 @@ import wx
 import os
 import webbrowser
 import nvdaControllerClient as nvda
+import wx.lib.newevent
+from threading import Thread
 from handler import *
 
 from l10n import *
@@ -24,6 +26,59 @@ import gettext
 
 # begin wxGlade: extracode
 # end wxGlade
+
+class DigitalizingDialog(wx.Dialog):
+	def __init__(self, *args, **kwds):
+		self.npages = 0
+		self.result = None
+		# begin wxGlade: DigitalizingDialog.__init__
+		kwds["style"] = kwds.get("style", 0) | wx.CAPTION
+		wx.Dialog.__init__(self, *args, **kwds)
+		self.SetTitle(_("Digitalizing"))
+
+		sizer_1 = wx.BoxSizer(wx.VERTICAL)
+
+		label_1 = wx.StaticText(self, wx.ID_ANY, _("Getting image from scanner, please wait."))
+		sizer_1.Add(label_1, 0, 0, 0)
+
+		sizer_2 = wx.StdDialogButtonSizer()
+		sizer_1.Add(sizer_2, 0, wx.ALIGN_RIGHT | wx.ALL, 4)
+
+		sizer_2.Realize()
+
+		self.SetSizer(sizer_1)
+		sizer_1.Fit(self)
+
+		self.Layout()
+		self.Centre()
+		# end wxGlade
+
+		self.Bind(wx.EVT_CLOSE, self.onCancel)
+		Event_TerminatedThread, EVT_TERMINATED_THREAD = wx.lib.newevent.NewEvent()
+		CommandEvent_TerminatedThread, EVT_COMMAND_TERMINATED_THREAD = wx.lib.newevent.NewCommandEvent()
+		self.Bind(EVT_TERMINATED_THREAD, self.onTerminatedThread)
+		EVT_TERMINATED_THREAD(self, self.onTerminatedThread)
+		evt = Event_TerminatedThread()
+		self.npages = len(doc.pagelist)
+		def digitalizeSubprocess():
+			self.result = doc.digitalize()
+			wx.PostEvent(self.GetEventHandler(), evt)
+		self.subprocess = Thread(target=digitalizeSubprocess)
+		self.subprocess.daemon = True
+		self.subprocess.start()
+
+	def onTerminatedThread(self, evt):
+		self.Unbind(wx.EVT_CLOSE)
+		self.Close()
+
+	def onCancel(self, evt):
+		if self.subprocess.isAlive() and  len(doc.pagelist) > self.npages:
+			doc.pagelist.pop(-1)
+		self.result = b"Canceled by user"
+		doc.flagStopScan = True
+		self.Unbind(wx.EVT_CLOSE)
+		self.Close()
+# end of class DigitalizingDialog
 
 class ListContext(wx.Menu):
 	def __init__(self, parent):
@@ -343,7 +398,7 @@ class MainFrame(wx.Frame):
 		self.Bind(wx.EVT_CHAR_HOOK, self.onKey)
 		self.Bind(wx.EVT_TEXT, self.onTextChanges)
 		self.pagelistPanel.Bind(wx.EVT_LISTBOX, self.onListItem)
-
+		
 	def onListItem(self, event):
 		if doc.pagelist: self.text_ctrl.SetValue(doc.pagelist[self.pagelistPanel.list_box.GetSelection()].recognized)
 		event.Skip()
@@ -539,8 +594,7 @@ class MainFrame(wx.Frame):
 			r = doc.recognize(dlg.Path)
 		dlg.Destroy()
 		if r:
-			self.text_ctrl.SetValue(_("Recognition failed\n\n")+r.decode("ansi"))
-			print(r)
+			wx.MessageBox(r.decode("ansi"), _("Something went wrong"))
 		else:
 			self.text_ctrl.SetValue(doc.pagelist[-1].recognized)
 			self.pagelistPanel.list_box.Append("{}: {}".format(len(doc.pagelist), doc.pagelist[-1].name))
@@ -551,16 +605,18 @@ class MainFrame(wx.Frame):
 	def onMenuGetDigitalize(self, event):  # wxGlade: MainFrame.<event_handler>
 		if bool(int(config["general"]["showsettings"])):
 			if not self.onMenuSettings(event): return
-		r = doc.digitalize()
+		dlg = DigitalizingDialog(parent=self)
+		dlg.ShowModal()
+		r = dlg.result
 		if r:
-			self.text_ctrl.SetValue(_("Recognition failed\n\n")+r.decode("ansi"))
-			print(r)
+			wx.MessageBox(r.decode("ansi"), _("Something went wrong"))
 		else:
 			self.text_ctrl.SetValue(doc.pagelist[-1].recognized)
 			self.pagelistPanel.list_box.Append("{}: {}".format(len(doc.pagelist), doc.pagelist[-1].name))
 			self.pagelistPanel.list_box.SetSelection(
 				len(self.pagelistPanel.list_box.Items)-1)
 		event.Skip()
+
 	def onMenuSettings(self, event):  # wxGlade: MainFrame.<event_handler>
 		dlg = ScanSettingsDialog(parent=self)
 		if dlg.ShowModal() == wx.ID_OK:
