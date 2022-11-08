@@ -1,7 +1,6 @@
 *.pyc
 *.bak
 .vscode/*
-bin/*
 .sconsign.dblite
 todo.txt
 build/*

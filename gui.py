@@ -683,7 +683,7 @@ class MainFrame(wx.Frame):
 
 	def onHelpAbout(self, event):  # wxGlade: MainFrame.<event_handler>
 		wx.MessageBox(
-			"{}\nVersion {}\n(C) {}\n{}".format(
+			"{}\nVersion {}\n(C) {} 2022 GPL 3.0\n{}".format(
 				appname, version, author, url),
 				_("About"))
 		event.Skip()
