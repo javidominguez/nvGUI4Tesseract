@@ -14,5 +14,10 @@ echo.
 echo cx_Freeze https://marcelotduarte.github.io/cx_Freeze
 pause
 pip install cx_Freeze 
+pause
+echo.
+echo Markdown https://Python-Markdown.github.io/
+pause
+pip install markdown
 echo.
 echo Ready

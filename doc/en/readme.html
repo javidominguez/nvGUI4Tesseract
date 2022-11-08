@@ -1,9 +1,31 @@
-<h1>Ap documentation</h1>
-<p>Not drafted yet.</p>
-<h2>Some keyboard shortcuts:</h2>
+<h1>nvGUI for Tesseract</h1>
+<h3>What is?</h3>
+<p>nvGUI for Tesseract is a light graphical interface to handle the OCR Tesseract, designed to be fully accessible with screen readers. It provides the basic functions for recognizing text in image files as well as scanning images from a WIA compatible scanner.  </p>
+<h3>Interface Description</h3>
+<p>The interface consists of a read-only text box, in which the recognition result is displayed, which occupies almost the entire window, with a menu at the top and a status bar at the bottom. There is also a small panel with the list of processed pages in the lower right corner, which can be shown/hidden by pressing F6. In the page list, the applications key displays a context menu with more options.<br />
+Most keyboard shortcuts are indicated in their corresponding option in the menu. Here is a complete list:  </p>
+<h4>Keyboard shortcuts</h4>
 <ul>
-<li>control+pageUp and control+pageDown to go to the previous or next page.</li>
-<li>F6 to toggle between edit box and page list.</li>
-<li>Applications key in the page list shows a context menu.<br />
-The rest of the shortcuts are indicated in the corresponding option of the menus.</li>
+<li>control+N creates a new document</li>
+<li>control+O opens a document</li>
+<li>control+S saves the current document</li>
+<li>control+shift+S saves a copy of the current document to another location</li>
+<li>control+shift+X exports all recognized text to a txt file</li>
+<li>control+F loads an image file and recognizes it</li>
+<li>control+D digitizes an image from the scanner and recognizes it</li>
+<li>F6 shows/hides page list</li>
+<li>control+pageDown moves to the next page</li>
+<li>control+pageUp moves to the previous page</li>
+<li>F1 displays this document</li>
+<li>control+Q closes the app  </li>
+</ul>
+<h3>Licenses<a name="licenses"></a></h3>
+<p>nvGUI for Tesseract is free software. Copying, distribution and modification is permitted under the license
+<a href="https://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License GPL 3.0.</a><br />
+nvGUI for Tesseract makes use of third party software under the following licenses:  </p>
+<ul>
+<li><a href="https://github.com/UB-Mannheim/tesseract/">Tesseract</a>, <a href="https://directory.fsf.org/wiki/License:Apache-2.0">Apache 2.0</a>  </li>
+<li><a href="https://github.com/nagimov/wia-cmd-scanner/">wia-cmd-scanner</a>, <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPL 3.0</a>  </li>
+<li><a href="http://www.xpdfreader.com/">xpdf-tools</a>, <a href="https://www.gnu.org/licenses/old-licenses/lgpl-2.0.html">GPL 2.0</a><br />
+Also, all the Python modules and libraries used are open source.  </li>
 </ul>

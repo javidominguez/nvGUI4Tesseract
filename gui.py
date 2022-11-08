@@ -354,6 +354,8 @@ class MainFrame(wx.Frame):
 		wxglade_tmp_menu = wx.Menu()
 		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("Documentation"), "")
 		self.Bind(wx.EVT_MENU, self.onHelpDoc, item)
+		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("License"), "")
+		self.Bind(wx.EVT_MENU, self.onHelpLicense, item)
 		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("View on Github"), "")
 		self.Bind(wx.EVT_MENU, self.onHelpGithub, item)
 		item = wxglade_tmp_menu.Append(wx.ID_ANY, _("About..."), "")
@@ -665,10 +667,10 @@ class MainFrame(wx.Frame):
 		wx.MessageBox("Event handler 'onMenuPrintImages' not implemented!", "Building")
 		event.Skip()
 
-	def onHelpDoc(self, event):  # wxGlade: MainFrame.<event_handler>
-		path = os.path.join(".", "doc", lancode, "readme.html")
+	def onHelpDoc(self, event, htmlFile="readme.html"):  # wxGlade: MainFrame.<event_handler>
+		path = os.path.join(".", "doc", lancode, htmlFile)
 		if not os.path.exists(path):
-			path = os.path.join(".", "doc", "en", "readme.html")
+			path = os.path.join(".", "doc", "en", htmlFile)
 		try:
 			os.startfile(path)
 		except:
@@ -684,6 +686,9 @@ class MainFrame(wx.Frame):
 			"{}\nVersion {}\n(C) {}\n{}".format(
 				appname, version, author, url),
 				_("About"))
+		event.Skip()
+	def onHelpLicense(self, event):  # wxGlade: MainFrame.<event_handler>
+		self.onHelpDoc(event, "license.html")
 		event.Skip()
 # end of class MainFrame
 

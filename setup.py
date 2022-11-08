@@ -1,4 +1,5 @@
 import sys, os 
+import markdown
 import shutil
 from distutils.dir_util import copy_tree
 from cx_Freeze import setup, Executable 
@@ -27,6 +28,13 @@ setup(
 	options = {"build_exe": build_exe_options},
 	executables=executables
 )
+
+for folder, subfolders, files in os.walk(os.path.join(os.getcwd(), "doc")):
+	for f in files:
+		if os.path.splitext(f)[-1].lower() == ".md":
+			input = os.path.join(folder,f)
+			output = os.path.splitext(input)[0]+".html"
+			markdown.markdownFromFile(input=input, output=output)
 
 dir_add = [
 	os.path.join(os.getcwd(), "doc"),

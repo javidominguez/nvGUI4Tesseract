@@ -1,9 +1,31 @@
-<h1>Documentación de la aplicación</h1>
-<p>No redactada todavía.</p>
-<h2>Algunos atajos de teclado:</h2>
+<h1>nvGUI para Tesseract</h1>
+<h3>¿Qué es?</h3>
+<p>nvGUI para Tesseract es una interfaz gráfica ligera para manejar el OCR Tesseract, diseñada para ser totalmente accesible con lectores de pantalla. Proporciona las funciones básicas para reconocer texto en archivos de imagen así como digitalizar imágenes desde un escáner WIA compatible.  </p>
+<h3>Descripción de la interfaz</h3>
+<p>La interfaz consta de un cuadro de texto de sólo lectura, en el que se muestra el resultado del reconocimiento, que ocupa casi toda la ventana, con un menú en la parte superior y una barra de estado en la inferior. También hay un pequeño panel con la lista de las páginas procesadas en la esquina inferior derecha, que se puede mostrar/ocultar pulsando F6. En la lista de páginas, la tecla aplicaciones despliega un menú contextual con más opciones.<br />
+La mayoría de atajos de teclado se indican en su correspondiente opción en el menú. Aquí hay una lista completa:  </p>
+<h4>Atajos de teclado</h4>
 <ul>
-<li>control+pageUp y control+pageDown para ir a la página anterior o siguiente.</li>
-<li>F6 para conmutar entre el cuadro de edición y la lista de páginas.</li>
-<li>Tecla aplicaciones en la lista de páginas muestra un menú contextual.<br />
-El resto de atajos se indican en la opción correspondiente de los menús.</li>
+<li>control+N crea un documento nuevo</li>
+<li>control+O abre un documento</li>
+<li>control+S guarda el documento actual</li>
+<li>control+shift+S guarda una copia del documento actual en otra ubicación</li>
+<li>control+shift+X exporta todo el texto reconocido a un archivo txt</li>
+<li>control+F carga un archivo de imágen y lo reconoce</li>
+<li>control+D digitaliza una imagen desde el escáner y la reconoce</li>
+<li>F6 muestra/oculta la lista de páginas</li>
+<li>control+pageDown se mueve a la página siguiente</li>
+<li>control+pageUp se mueve a la página anterior</li>
+<li>F1 muestra este documento</li>
+<li>control+Q cierra la aplicación  </li>
+</ul>
+<h3>Licencias<a name=·licenses"></a></h3>
+<p>nvGUI para Tesseract es software libre. Se permite su copia, distribución y modificación bajo la licencia
+<a href="https://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License GPL 3.0.</a><br />
+nvGUI para Tesseract hace uso de software de terceras partes con las siguientes licencias:  </p>
+<ul>
+<li><a href="https://github.com/UB-Mannheim/tesseract/">Tesseract</a>, <a href="https://directory.fsf.org/wiki/License:Apache-2.0">Apache 2.0</a>  </li>
+<li><a href="https://github.com/nagimov/wia-cmd-scanner/">wia-cmd-scanner</a>, <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPL 3.0</a>  </li>
+<li><a href="http://www.xpdfreader.com/">xpdf-tools</a>, <a href="https://www.gnu.org/licenses/old-licenses/lgpl-2.0.html">GPL 2.0</a><br />
+Asimismo, todos los módulos y librerías Python usados son open source.</li>
 </ul>
