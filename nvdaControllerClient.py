@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: UTF-8 -*-
+
+# A part of nvGUI4Tesseract, a light and accessible graphical interface to handle the OCR Tesseract.
+# Copyright (C) 2022 Javi Dominguez 
+# This file is covered by the GNU General Public License.
+# See the file COPYING for more details.
+
 import ctypes
 import sys
 

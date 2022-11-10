@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+# -*- coding: UTF-8 -*-
+
+# A part of nvGUI4Tesseract, a light and accessible graphical interface to handle the OCR Tesseract.
+# Copyright (C) 2022 Javi Dominguez 
+# This file is covered by the GNU General Public License.
+# See the file COPYING for more details.
+
 from settings import config
 from random import choice
 from zipfile import ZipFile, ZIP_DEFLATED
@@ -49,7 +57,7 @@ class DocumentHandler():
 		self.name = _("untitled")
 		self.savedDocumentPath = ""
 		self.flagModified = False
-		self.flagStopScan = False
+		self.flagCancelled = False
 		self.pagelist = []
 		self.clipboard = None
 		self.tempFiles = os.path.join(os.environ["temp"], "tesseract-"+self.__randomizePath())
@@ -61,7 +69,43 @@ class DocumentHandler():
 			folder = folder+choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 		return folder
 
-	def recognize(self, filepath, name=None):
+	def isPDF(self, path):
+		return True if os.path.splitext(path)[-1].lower() == ".pdf" else False
+
+	def recognizePDF(self, path, feedback=None):
+		if self.flagCancelled: return
+		basenamePNG = self.__randomizePath()
+		basenamePDF = os.path.basename(path)
+		command = "{} -r 150 -gray \"{}\" \"{}\"".format(
+			config["binaries"]["xpdf-tools"],
+			path,
+			os.path.join(self.tempFiles, basenamePNG)
+		)
+		si = subprocess.STARTUPINFO()
+		si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+		p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=si)
+		stdout, stderr = p.communicate()
+		if stderr:
+			return _("Failed to extract pages from file {}").format(basenamePDF)
+		errors = []
+		for page in filter(lambda f: f.startswith(basenamePNG), os.listdir(self.tempFiles)):
+			if self.flagCancelled: return
+			numpage = int(os.path.splitext(page)[0].split("-")[1])
+			if feedback:
+				feedback.SetLabelText(_("page {}").format(numpage))
+				if not feedback.Shown:
+					feedback.Show()
+			pagename = _("{file} page {npage}").format(file=basenamePDF, npage=numpage)
+			r = self.recognize(os.path.join(self.tempFiles, page), pagename)
+			if r:
+				errors.append(_("Failed recognition of page {}").format(numpage))
+		return "\n".join(errors) if errors else None
+
+	def recognize(self, filepath, name=None, feedback=None):
+		if self.flagCancelled: return
+		if self.isPDF(filepath):
+			r = self.recognizePDF(filepath, feedback=feedback)
+			return r
 		if not name: name = os.path.basename(filepath)
 		recogfile = os.path.join(self.tempFiles, "recognized"+self.__randomizePath())
 		command = "{exe} \"{filein}\" \"{fileout}\" --dpi 150 --psm 1 --oem 3 -c tessedit_do_invert=0 -l {lng} quiet".format(
@@ -75,14 +119,17 @@ class DocumentHandler():
 		p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=si)
 		stdout, stderr = p.communicate()
 		if stderr: return decode(stderr)
+		if self.flagCancelled: return
 		with open(recogfile+".txt", "rb") as f:
 			text = f.read().decode("ansi").split("\n")
 		# Suppression of excess blank lines.
 		text = "\n".join(filter(lambda l: len(l.replace(" ", ""))>0, text))
-		self.pagelist.append(Page(name, filepath, text.encode("ansi")))
-		self.flagModified = True
+		if not self.flagCancelled:
+			self.pagelist.append(Page(name, filepath, text.encode("ansi")))
+			self.flagModified = True
 
 	def digitalize(self):
+		if self.flagCancelled: return
 		outputFile = os.path.join(self.tempFiles, "image-"+self.__randomizePath()+".jpg")
 		command = "{} /w 0 /h 0 /dpi {} /color {} /format JPG /output {}".format(
 			config["binaries"]["wia-cmd-scanner"],
@@ -94,12 +141,11 @@ class DocumentHandler():
 		si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 		p = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=si)
 		stdout, stderr = p.communicate()
-		if self.flagStopScan:
+		if self.flagCancelled:
 			self.flagModified = False
-			self.flagStopScan = False
-			return b"Cancelled by user"
+			return _("Cancelled by user")
 		if not os.path.exists(outputFile): return stdout
-		return self.recognize(outputFile, _("Digitalized image {color} {ppp}").format(
+		if not self.flagCancelled: return self.recognize(outputFile, _("Digitalized image {color} {ppp}").format(
 			color = config["scanner"]["color"],
 			ppp = config["scanner"]["resolution"]
 		))
@@ -126,7 +172,7 @@ class DocumentHandler():
 		self.name = _("untitled")
 		self.savedDocumentPath = ""
 		self.flagModified = False
-		self.flagStopScan = False
+		self.flagCancelled = False
 		self.pagelist = []
 		for folder, subfolders, files in os.walk(self.tempFiles):
 			for f in files:
