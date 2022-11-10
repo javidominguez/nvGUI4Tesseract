@@ -29,27 +29,28 @@ import gettext
 # begin wxGlade: extracode
 # end wxGlade
 
-class DigitalizingDialog(wx.Dialog):
+class SubprocessDialog(wx.Dialog):
 	def __init__(self, *args, **kwds):
 		self.npages = 0
 		self.result = None
-		# begin wxGlade: DigitalizingDialog.__init__
+		# begin wxGlade: SubprocessDialog.__init__
 		kwds["style"] = kwds.get("style", 0) | wx.CAPTION
 		wx.Dialog.__init__(self, *args, **kwds)
 		self.SetTitle(_("Digitalizing"))
 
-		sizer_1 = wx.BoxSizer(wx.VERTICAL)
+		sizer = wx.BoxSizer(wx.VERTICAL)
 
-		label_1 = wx.StaticText(self, wx.ID_ANY, _("Getting image from scanner, please wait."))
-		sizer_1.Add(label_1, 0, 0, 0)
+		self.feedbackLabel = wx.StaticText(self, wx.ID_ANY, _("Getting image from scanner, please wait."))
+		sizer.Add(self.feedbackLabel, 0, 0, 0)
 
-		self.SetSizer(sizer_1)
-		sizer_1.Fit(self)
+		self.SetSizer(sizer)
+		sizer.Fit(self)
 
 		self.Layout()
 		self.Centre()
 		# end wxGlade
 
+	def ShowModal(self, source="scanner"):
 		self.Bind(wx.EVT_CLOSE, self.onCancel)
 		Event_TerminatedThread, EVT_TERMINATED_THREAD = wx.lib.newevent.NewEvent()
 		CommandEvent_TerminatedThread, EVT_COMMAND_TERMINATED_THREAD = wx.lib.newevent.NewCommandEvent()
@@ -57,12 +58,18 @@ class DigitalizingDialog(wx.Dialog):
 		EVT_TERMINATED_THREAD(self, self.onTerminatedThread)
 		evt = Event_TerminatedThread()
 		self.npages = len(doc.pagelist)
-		def digitalizeSubprocess():
-			self.result = doc.digitalize()
+		def runSubprocess():
+			if source == "scanner":
+				self.result = doc.digitalize()
+			else:
+				self.SetTitle(_("Recognizing"))
+				self.feedbackLabel.SetLabelText(_("Processing the file {}").format(os.path.basename(source)))
+				self.result = doc.recognize(source)
 			wx.PostEvent(self.GetEventHandler(), evt)
-		self.subprocess = Thread(target=digitalizeSubprocess)
+		self.subprocess = Thread(target=runSubprocess)
 		self.subprocess.daemon = True
 		self.subprocess.start()
+		super(SubprocessDialog, self).ShowModal()
 
 	def onTerminatedThread(self, evt):
 		self.Unbind(wx.EVT_CLOSE)
@@ -75,7 +82,7 @@ class DigitalizingDialog(wx.Dialog):
 		doc.flagStopScan = True
 		self.Unbind(wx.EVT_CLOSE)
 		self.Close()
-# end of class DigitalizingDialog
+# end of class SubprocessDialog
 
 class ListContext(wx.Menu):
 	def __init__(self, parent):
@@ -592,7 +599,10 @@ class MainFrame(wx.Frame):
 		style = wx.FD_OPEN)
 		r = None
 		if dlg.ShowModal() == wx.ID_OK:
-			r = doc.recognize(dlg.Path)
+			spdlg = SubprocessDialog(parent=self)
+			spdlg.ShowModal(dlg.Path)
+			r = spdlg.result
+			spdlg.Destroy()
 		dlg.Destroy()
 		if r:
 			wx.MessageBox(decode(r), _("Something went wrong"))
@@ -606,7 +616,7 @@ class MainFrame(wx.Frame):
 	def onMenuGetDigitalize(self, event):  # wxGlade: MainFrame.<event_handler>
 		if bool(int(config["general"]["showsettings"])):
 			if not self.onMenuSettings(event): return
-		dlg = DigitalizingDialog(parent=self)
+		dlg = SubprocessDialog(parent=self)
 		dlg.ShowModal()
 		r = dlg.result
 		if r:
