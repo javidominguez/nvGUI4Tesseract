@@ -63,7 +63,6 @@ class SubprocessDialog(wx.Dialog):
 		Event_TerminatedThread, EVT_TERMINATED_THREAD = wx.lib.newevent.NewEvent()
 		CommandEvent_TerminatedThread, EVT_COMMAND_TERMINATED_THREAD = wx.lib.newevent.NewCommandEvent()
 		self.Bind(EVT_TERMINATED_THREAD, self.onTerminatedThread)
-		EVT_TERMINATED_THREAD(self, self.onTerminatedThread)
 		evt = Event_TerminatedThread()
 		self.npages = len(doc.pagelist)
 		self.scan = True if source == "scanner" else False
@@ -414,7 +413,15 @@ class MainFrame(wx.Frame):
 		self.Bind(wx.EVT_CHAR_HOOK, self.onKey)
 		self.Bind(wx.EVT_TEXT, self.onTextChanges)
 		self.pagelistPanel.Bind(wx.EVT_LISTBOX, self.onListItem)
-		
+		Event_DocumentChange, EVT_DOCUMENT_CHANGE = wx.lib.newevent.NewEvent()
+		CommandEvent_DocumentChange, EVT_COMMAND_DOCUMENT_CHANGE = wx.lib.newevent.NewCommandEvent()
+		self.Bind(EVT_DOCUMENT_CHANGE, self.onDocumentChange)
+		doc.bind(Event_DocumentChange(), self.GetEventHandler())
+
+	def onDocumentChange(self, event):
+		print("Document has changed. Handler for this event is not implemented yet.")
+
+
 	def onListItem(self, event):
 		if doc.pagelist: self.text_ctrl.SetValue(doc.pagelist[self.pagelistPanel.list_box.GetSelection()].recognized)
 		event.Skip()

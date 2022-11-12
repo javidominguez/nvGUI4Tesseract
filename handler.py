@@ -46,6 +46,126 @@ class Page():
 		self.imagefile = imagefile
 		self.recognized = recognized
 
+class PageList():
+	__pages = []
+	__index = 0
+
+	def __init__(self, pages=[]):
+		if pages: self.add(pages)
+		self.evtDocumentChange = None
+		self.EventHandler = None
+
+	def __len__(self):
+		return len(self.__pages)
+
+	def __getitem__(self, n):
+		return self.__pages[n]
+
+	def add(self, item):
+		if isinstance(item, Page):
+			self.__pages.append(item)
+			if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+			return 1
+		if isinstance(item, PageList):
+			item = item.__pages
+		if isinstance(item, list):
+			x = len(item)
+			for i in range(x):
+				if isinstance(item[i], Page):
+					self.__pages.append(item[i])
+				else:
+					raise TypeError("item {} is not a Page object".format(i))
+		else:
+			raise TypeError("The argument must be a Page object or a list of them.")
+		if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+		return x
+
+	def append(self, item):
+		if not isinstance (item, Page):
+			raise TypeError("Only objects of type Page can be appened")
+		self.__pages.append(item)
+		if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+
+	def pop(self, index):
+		p = self.__pages.pop(index)
+		bottom = len(self.__pages)
+		if self.__index > bottom:
+			self.__index = bottom
+		if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+		return p
+
+	def insert(self, index, item):
+		if not isinstance(item, Page):
+			raise TypeError("Only Page objects can be inserted.")
+		if index < 0 or index > len(self.__pages):
+			raise IndexError("Cannot insert into position {}; out of range 0-{}".format(
+				index, len(self.__pages)
+			))
+		self.__pages.insert(index, item)
+		self.__index = index
+		if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+
+	def setIndex(self, i):
+		max = len(self.__pages)-1
+		if isinstance(i, int):
+			if i<0 or i>max:
+				raise IndexError("Index {} out of range 0-{}".format(i, max))
+			self.__index = i
+			if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+		elif isinstance(i, Page):
+			self.__index = self.__pages.index(i)
+			if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+		else:
+			raise TypeError("Argument must be type int or Page object.")
+
+	def next(self):
+		if self.__index+1 >= len(self.__pages):
+			return None
+		self.__index = self.__index+1
+		if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+		return self.__pages[self.__index]
+
+	def previous(self):
+		if self.__index-1 < 0:
+			return None
+		self.__index = self.__index-1
+		if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+		return self.__pages[self.__index]
+
+	def first(self):
+		self.__index = 0
+		if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+		return self.__pages[0]
+
+	def last(self):
+		self.__index = len(self.__pages)-1
+		if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+		return self.__pages[self.__index]
+
+	@property
+	def current(self):
+		return self.__pages[self.__index]
+
+	@property
+	def index(self):
+		return self.__index
+
+	@property
+	def names(self):
+		return [p.name for p in self.__pages]
+
+	@property
+	def files(self):
+		return [p.imagefile for p in self.__pages]
+
+	@property
+	def recognized(self):
+		return [p.recognized for p in self.__pages]
+
+	@property
+	def asTuple(self):
+		return [(p.name, p.imagefile, p.recognized) for p in self.__pages]
+
 class DocumentHandler():
 	def __del__(self):
 		for folder, subfolders, files in os.walk(self.tempFiles):
@@ -58,7 +178,7 @@ class DocumentHandler():
 		self.savedDocumentPath = ""
 		self.flagModified = False
 		self.flagCancelled = False
-		self.pagelist = []
+		self.pagelist = PageList()
 		self.clipboard = None
 		self.tempFiles = os.path.join(os.environ["temp"], "tesseract-"+self.__randomizePath())
 		os.mkdir(self.tempFiles)
@@ -68,6 +188,10 @@ class DocumentHandler():
 		for i in range (16):
 			folder = folder+choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 		return folder
+
+	def bind(self, event, handler):
+		self.pagelist.evtDocumentChange = event
+		self.pagelist.EventHandler = handler
 
 	def isPDF(self, path):
 		return True if os.path.splitext(path)[-1].lower() == ".pdf" else False
