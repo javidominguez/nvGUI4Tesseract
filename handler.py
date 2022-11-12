@@ -48,7 +48,7 @@ class Page():
 
 class PageList():
 	__pages = []
-	__index = 0
+	__index = -1
 
 	def __init__(self, pages=[]):
 		if pages: self.add(pages)
@@ -64,7 +64,8 @@ class PageList():
 	def add(self, item):
 		if isinstance(item, Page):
 			self.__pages.append(item)
-			if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+			self.__index = len(self.__pages)-1
+			if self.EventHandler and self.evtDocumentChange: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
 			return 1
 		if isinstance(item, PageList):
 			item = item.__pages
@@ -77,21 +78,23 @@ class PageList():
 					raise TypeError("item {} is not a Page object".format(i))
 		else:
 			raise TypeError("The argument must be a Page object or a list of them.")
-		if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+		self.__index = len(self.__pages)-1
+		if self.EventHandler and self.evtDocumentChange: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
 		return x
 
 	def append(self, item):
 		if not isinstance (item, Page):
 			raise TypeError("Only objects of type Page can be appened")
 		self.__pages.append(item)
-		if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+		self.__index = len(self.__pages)-1
+		if self.EventHandler and self.evtDocumentChange: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
 
 	def pop(self, index):
 		p = self.__pages.pop(index)
 		bottom = len(self.__pages)
 		if self.__index > bottom:
 			self.__index = bottom
-		if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+		if self.EventHandler and self.evtDocumentChange: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
 		return p
 
 	def insert(self, index, item):
@@ -103,7 +106,7 @@ class PageList():
 			))
 		self.__pages.insert(index, item)
 		self.__index = index
-		if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+		if self.EventHandler and self.evtDocumentChange: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
 
 	def setIndex(self, i):
 		max = len(self.__pages)-1
@@ -111,10 +114,10 @@ class PageList():
 			if i<0 or i>max:
 				raise IndexError("Index {} out of range 0-{}".format(i, max))
 			self.__index = i
-			if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+			if self.EventHandler and self.evtDocumentChange: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
 		elif isinstance(i, Page):
 			self.__index = self.__pages.index(i)
-			if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+			if self.EventHandler and self.evtDocumentChange: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
 		else:
 			raise TypeError("Argument must be type int or Page object.")
 
@@ -122,25 +125,30 @@ class PageList():
 		if self.__index+1 >= len(self.__pages):
 			return None
 		self.__index = self.__index+1
-		if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+		if self.EventHandler and self.evtDocumentChange: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
 		return self.__pages[self.__index]
 
 	def previous(self):
 		if self.__index-1 < 0:
 			return None
 		self.__index = self.__index-1
-		if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+		if self.EventHandler and self.evtDocumentChange: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
 		return self.__pages[self.__index]
 
 	def first(self):
 		self.__index = 0
-		if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+		if self.EventHandler and self.evtDocumentChange: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
 		return self.__pages[0]
 
 	def last(self):
 		self.__index = len(self.__pages)-1
-		if self.EventHandler: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+		if self.EventHandler and self.evtDocumentChange: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
 		return self.__pages[self.__index]
+
+	def clear(self):
+		self.__pages = []
+		self.__index = -1
+		if self.EventHandler and self.evtDocumentChange: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
 
 	@property
 	def current(self):
@@ -178,7 +186,7 @@ class DocumentHandler():
 		self.savedDocumentPath = ""
 		self.flagModified = False
 		self.flagCancelled = False
-		self.pagelist = PageList()
+		self.pages = PageList()
 		self.clipboard = None
 		self.tempFiles = os.path.join(os.environ["temp"], "tesseract-"+self.__randomizePath())
 		os.mkdir(self.tempFiles)
@@ -190,8 +198,8 @@ class DocumentHandler():
 		return folder
 
 	def bind(self, event, handler):
-		self.pagelist.evtDocumentChange = event
-		self.pagelist.EventHandler = handler
+		self.pages.evtDocumentChange = event
+		self.pages.EventHandler = handler
 
 	def isPDF(self, path):
 		return True if os.path.splitext(path)[-1].lower() == ".pdf" else False
@@ -249,7 +257,7 @@ class DocumentHandler():
 		# Suppression of excess blank lines.
 		text = "\n".join(filter(lambda l: len(l.replace(" ", ""))>0, text))
 		if not self.flagCancelled:
-			self.pagelist.append(Page(name, filepath, text.encode("ansi")))
+			self.pages.append(Page(name, filepath, text.encode("ansi")))
 			self.flagModified = True
 
 	def digitalize(self):
@@ -275,13 +283,13 @@ class DocumentHandler():
 		))
 
 	def exportText(self):
-		return b'\n'.join([page.recognized for page in self.pagelist])
+		return b'\n'.join([page.recognized for page in self.pages])
 
 	def save(self, path):
 		self.savedDocumentPath = path
 		with ZipFile(path, "w") as z:
 			pagelist = []
-			for page in self.pagelist:
+			for page in self.pages:
 				filename = self.__randomizePath()+os.path.splitext(os.path.basename(page.imagefile))[1]
 				pagelist.append((page.name, filename, page.recognized))
 				z.write(page.imagefile, filename, compress_type=ZIP_DEFLATED)
@@ -297,7 +305,7 @@ class DocumentHandler():
 		self.savedDocumentPath = ""
 		self.flagModified = False
 		self.flagCancelled = False
-		self.pagelist = []
+		self.pages.clear()
 		for folder, subfolders, files in os.walk(self.tempFiles):
 			for f in files:
 				os.remove(os.path.join(folder,f))
@@ -312,7 +320,8 @@ class DocumentHandler():
 		self.savedDocumentPath = path
 		for page in pagelist:
 			name, file, recognized = page
-			self.pagelist.append(Page(name, os.path.join(self.tempFiles, file), recognized))
+			self.pages.append(Page(name, os.path.join(self.tempFiles, file), recognized))
+			self.pages.first()
 
 	def exportAllImages(self, path):
 		folder = os.path.join(path, self.name)
@@ -325,7 +334,7 @@ class DocumentHandler():
 		except:
 			return False
 		n = 1
-		for page in self.pagelist:
+		for page in self.pages:
 			name = "{doc} [{pg}]{ext}".format(
 				doc = self.name,
 				pg = _("page {}").format(n),
@@ -337,5 +346,9 @@ class DocumentHandler():
 				return False
 			n = n+1
 		return True
+
+	@property
+	def isEmpty(self):
+		return True if len(self.pages) == 0 else False
 
 doc = DocumentHandler()

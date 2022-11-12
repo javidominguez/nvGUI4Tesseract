@@ -61,10 +61,9 @@ class SubprocessDialog(wx.Dialog):
 	def ShowModal(self, source="scanner"):
 		self.Bind(wx.EVT_CLOSE, self.onCancel)
 		Event_TerminatedThread, EVT_TERMINATED_THREAD = wx.lib.newevent.NewEvent()
-		CommandEvent_TerminatedThread, EVT_COMMAND_TERMINATED_THREAD = wx.lib.newevent.NewCommandEvent()
 		self.Bind(EVT_TERMINATED_THREAD, self.onTerminatedThread)
 		evt = Event_TerminatedThread()
-		self.npages = len(doc.pagelist)
+		self.npages = len(doc.pages)
 		self.scan = True if source == "scanner" else False
 		def runSubprocess():
 			doc.flagCancelled = False
@@ -87,8 +86,8 @@ class SubprocessDialog(wx.Dialog):
 	def onCancel(self, evt):
 		doc.flagCancelled = True
 		self.result = _("Cancelled by user")
-		if self.scan and  len(doc.pagelist) > self.npages:
-			doc.pagelist.pop(-1)
+		if self.scan and  len(doc.pages) > self.npages:
+			doc.pages.pop(-1)
 		self.Unbind(wx.EVT_CLOSE)
 		self.Close()
 # end of class SubprocessDialog
@@ -98,22 +97,22 @@ class ListContext(wx.Menu):
 		super(ListContext, self).__init__()
 		self.parent = parent
 
-		if doc.pagelist and self.parent.GetSelection() > 0:
+		if doc.pages and self.parent.GetSelection() > 0:
 			item_moveUp = wx.MenuItem(self, wx.ID_ANY, _("Move up"))
 			self.Append(item_moveUp)
 			self.Bind(wx.EVT_MENU, self.action_moveUp, item_moveUp)
 
-		if doc.pagelist and self.parent.GetSelection() < len(self.parent.Items)-1:
+		if doc.pages and self.parent.GetSelection() < len(self.parent.Items)-1:
 			item_moveDown = wx.MenuItem(self, wx.ID_ANY, _("Move down"))
 			self.Append(item_moveDown)
 			self.Bind(wx.EVT_MENU, self.action_moveDown, item_moveDown)
 
-		if len(doc.pagelist) > 1:
+		if len(doc.pages) > 1:
 			item_copy = wx.MenuItem(self, wx.ID_ANY, _("Copy"))
 			self.Append(item_copy)
 			self.Bind(wx.EVT_MENU, self.action_copy, item_copy)
 
-		if len(doc.pagelist) > 1:
+		if len(doc.pages) > 1:
 			item_cut = wx.MenuItem(self, wx.ID_ANY, _("Cut"))
 			self.Append(item_cut)
 			self.Bind(wx.EVT_MENU, self.action_cut, item_cut)
@@ -129,15 +128,15 @@ class ListContext(wx.Menu):
 
 	def action_remove(self, event):
 		index = self.parent.GetSelection()
-		doc.pagelist.pop(index)
-		doc.flagModified = True if doc.pagelist else False
+		doc.pages.pop(index)
+		doc.flagModified = True if doc.pages else False
 		self.parent.Clear()
-		self.parent.SetItems(["{}: {}".format(n+1, p) for n, p in enumerate([p.name for p in doc.pagelist])])
+		self.parent.SetItems(["{}: {}".format(n+1, p) for n, p in enumerate([p.name for p in doc.pages])])
 		try:
 			self.parent.SetSelection(index)
 		except:
-			if doc.pagelist:
-				self.parent.SetSelection(len(doc.pagelist)-1)
+			if doc.pages:
+				self.parent.SetSelection(len(doc.pages)-1)
 			else:
 				self.parent.parent.parent.text_ctrl.SetValue("")
 				self.parent.parent.parent.text_ctrl.SetFocus()
@@ -166,14 +165,14 @@ class ListContext(wx.Menu):
 
 	def action_paste(self, event):
 		index, remove = doc.clipboard
-		page = doc.pagelist[index]
-		if remove: doc.pagelist.pop(index)
+		page = doc.pages[index]
+		if remove: doc.pages.pop(index)
 		index = self.parent.GetSelection()
-		doc.pagelist.insert(index, page)
+		doc.pages.insert(index, page)
 		doc.clipboard = None
 		doc.flagModified = True
 		self.parent.Clear()
-		self.parent.SetItems(["{}: {}".format(n+1, p) for n, p in enumerate([p.name for p in doc.pagelist])])
+		self.parent.SetItems(["{}: {}".format(n+1, p) for n, p in enumerate([p.name for p in doc.pages])])
 		self.parent.SetSelection(index)
 		self.parent.parent.parent.onListItem(event)
 		event.Skip()
@@ -411,19 +410,39 @@ class MainFrame(wx.Frame):
 		self.text_ctrl.SetSize(self.Size-(10,80))
 		self.panel.Bind(wx.EVT_SIZE, self.onWindowSize)
 		self.Bind(wx.EVT_CHAR_HOOK, self.onKey)
-		self.Bind(wx.EVT_TEXT, self.onTextChanges)
 		self.pagelistPanel.Bind(wx.EVT_LISTBOX, self.onListItem)
 		Event_DocumentChange, EVT_DOCUMENT_CHANGE = wx.lib.newevent.NewEvent()
-		CommandEvent_DocumentChange, EVT_COMMAND_DOCUMENT_CHANGE = wx.lib.newevent.NewCommandEvent()
 		self.Bind(EVT_DOCUMENT_CHANGE, self.onDocumentChange)
 		doc.bind(Event_DocumentChange(), self.GetEventHandler())
 
 	def onDocumentChange(self, event):
-		print("Document has changed. Handler for this event is not implemented yet.")
-
+		if doc.isEmpty:
+			self.text_ctrl.Clear()
+			self.pagelistPanel.list_box.Clear()
+			self.frame_menubar.FindItem(2)[0].Enable(False) # list of pages
+			self.frame_menubar.FindItem(3)[0].Enable(False) # export
+			self.frame_menubar.FindItem(4)[0].Enable(False) # save
+			self.frame_menubar.FindItem(5)[0].Enable(False) # save as
+			self.frame_menubar.FindItem(6)[0].Enable(False) # print
+			self.frame_statusbar.PushStatusText(_("Ready"))
+			self.SetTitle("TesseractOCR - {}".format(doc.name))
+		else:
+			self.text_ctrl.SetValue(doc.pages.current.recognized)
+			items = ["{}: {}".format(n+1, p) for n, p in enumerate(doc.pages.names)]
+			if items != self.pagelistPanel.list_box.GetItems():
+				self.pagelistPanel.list_box.SetItems(items)
+			self.pagelistPanel.list_box.SetSelection(doc.pages.index)
+			self.frame_menubar.FindItem(2)[0].Enable(True) # list of pages
+			self.frame_menubar.FindItem(3)[0].Enable(True) # export
+			self.frame_menubar.FindItem(4)[0].Enable(True) # save
+			self.frame_menubar.FindItem(5)[0].Enable(True) # save as
+			self.frame_menubar.FindItem(6)[0].Enable(True) # print
+			self.frame_statusbar.PushStatusText(_("Page {} of {}").format(doc.pages.index+1, len(doc.pages)))
+			self.SetTitle("TesseractOCR - {}{}".format("*" if doc.flagModified else "", doc.name))
+		event.Skip()
 
 	def onListItem(self, event):
-		if doc.pagelist: self.text_ctrl.SetValue(doc.pagelist[self.pagelistPanel.list_box.GetSelection()].recognized)
+		if not doc.isEmpty: doc.pages.setIndex(self.pagelistPanel.list_box.GetSelection())
 		event.Skip()
 
 	def onKey(self, event):
@@ -454,48 +473,14 @@ class MainFrame(wx.Frame):
 			if self.frame_menubar.FindItem(3)[0].Enabled:
 				self.onMenuExport(event)
 		elif hotkey(367, True): # control+pageDown
-			self.moveToPage(+1)
+			doc.pages.next()
+			nvda.message(_("Page {} of {}").format(doc.pages.index+1, len(doc.pages)))
 		elif hotkey(366, True): # control+pageUp
-			self.moveToPage(-1)
+			doc.pages.previous()
+			nvda.message(_("Page {} of {}").format(doc.pages.index+1, len(doc.pages)))
 		elif hotkey(340): # F1
 			self.onHelpDoc(event)
 		# print("keycode: {}".format(event.GetKeyCode()))
-		event.Skip()
-
-	def moveToPage(self, x):
-		current = self.pagelistPanel.list_box.GetSelection()
-		if current == -1:
-			nvda.message(_("The document is empty"))
-			return
-		total = len(doc.pagelist)
-		new = current+x
-		if new < 0: new=0
-		if new >= total: new = total-1
-		self.text_ctrl.SetValue(doc.pagelist[new].recognized)
-		self.pagelistPanel.list_box.SetSelection(new)
-		nvda.message(_("Page {} of {}").format(new+1, total))
-
-
-	def onTextChanges(self, event):
-		if doc.pagelist:
-			self.frame_menubar.FindItem(2)[0].Enable(True)
-			self.frame_menubar.FindItem(3)[0].Enable(True)
-			self.frame_menubar.FindItem(6)[0].Enable(True)
-			if doc.flagModified:
-				self.frame_menubar.FindItem(4)[0].Enable(True)
-				self.frame_menubar.FindItem(5)[0].Enable(True)
-				self.frame_menubar.FindItem(6)[0].Enable(True)
-			pageindex = [p.recognized for p in doc.pagelist].index(self.text_ctrl.GetValue().encode())+1
-			npages = len(doc.pagelist)
-			self.frame_statusbar.PushStatusText(_("Page {} of {}").format(pageindex, npages))
-			if doc.flagModified: self.SetTitle("TesseractOCR - *{}".format(doc.name))
-		else:
-			self.frame_menubar.FindItem(3)[0].Enable(False)
-			self.frame_menubar.FindItem(4)[0].Enable(False)
-			self.frame_menubar.FindItem(5)[0].Enable(False)
-			self.frame_menubar.FindItem(6)[0].Enable(False)
-			self.frame_statusbar.PushStatusText(_("Ready"))
-			self.SetTitle("TesseractOCR - {}".format(doc.name))
 		event.Skip()
 
 	def onWindowSize(self, event):
@@ -503,7 +488,7 @@ class MainFrame(wx.Frame):
 		event.Skip()
 
 	def onMenuViewPagelist(self, event):  # wxGlade: MainFrame.<event_handler>
-		if not doc.pagelist:
+		if doc.isEmpty:
 			nvda.message(_("The document is empty"))
 			event.Skip()
 			return
@@ -543,9 +528,7 @@ class MainFrame(wx.Frame):
 			elif res == wx.ID_YES:
 				self.onMenuFileSave(event)
 		doc.reset()
-		self.pagelistPanel.list_box.Clear()
-		self.text_ctrl.Clear()
-		self.frame_menubar.FindItem(2)[0].Enable(True)
+		nvda.message(_("New document {}").format(doc.name))
 		event.Skip()
 	
 	def onMenuFileOpen(self, event):  # wxGlade: MainFrame.<event_handler>
@@ -567,11 +550,6 @@ class MainFrame(wx.Frame):
 		style = wx.FD_OPEN)
 		if dlg.ShowModal() == wx.ID_OK:
 			doc.open(dlg.Path)
-			if doc.pagelist:
-				self.pagelistPanel.list_box.SetItems(["{}: {}".format(n+1, p) for n, p in enumerate([p.name for p in doc.pagelist])])
-				self.pagelistPanel.list_box.SetSelection(0)
-				self.text_ctrl.SetValue(doc.pagelist[0].recognized)
-				self.SetTitle("TesseractOCR - {}".format(doc.name))
 		dlg.Destroy()
 		event.Skip()
 
@@ -623,13 +601,6 @@ class MainFrame(wx.Frame):
 		dlg.Destroy()
 		if r:
 			wx.MessageBox(decode(r), _("Something went wrong"))
-		try:
-			self.text_ctrl.SetValue(doc.pagelist[-1].recognized)
-		except IndexError:
-			pass # pagelist is empty
-		self.pagelistPanel.list_box.SetItems(["{}: {}".format(n+1, p) for n, p in enumerate([p.name for p in doc.pagelist])])
-		self.pagelistPanel.list_box.SetSelection(
-		len(self.pagelistPanel.list_box.Items)-1)
 		event.Skip()
 
 	def onMenuGetDigitalize(self, event):  # wxGlade: MainFrame.<event_handler>
@@ -640,11 +611,6 @@ class MainFrame(wx.Frame):
 		r = dlg.result
 		if r:
 			wx.MessageBox(decode(r), _("Something went wrong"))
-		else:
-			self.text_ctrl.SetValue(doc.pagelist[-1].recognized)
-			self.pagelistPanel.list_box.SetItems(["{}: {}".format(n+1, p) for n, p in enumerate([p.name for p in doc.pagelist])])
-			self.pagelistPanel.list_box.SetSelection(
-				len(self.pagelistPanel.list_box.Items)-1)
 		event.Skip()
 
 	def onMenuSettings(self, event):  # wxGlade: MainFrame.<event_handler>
