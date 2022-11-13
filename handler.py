@@ -9,6 +9,7 @@
 from settings import config
 from random import choice
 from zipfile import ZipFile, ZIP_DEFLATED
+from threading import Thread, Lock
 import os
 import shutil
 import wx
@@ -39,6 +40,12 @@ def getTesseractLanguage():
 	if lancode in languages: return languages[lancode] if languages[lancode] in availableLanguages else "eng"
 	return "eng"
 tesseractLanguage = getTesseractLanguage()
+
+def randomizePath():
+	folder = ""
+	for i in range (16):
+		folder = folder+choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
+	return folder
 
 class Page():
 	def __init__(self, name="", imagefile="", recognized=""):
@@ -188,14 +195,8 @@ class DocumentHandler():
 		self.flagCancelled = False
 		self.pages = PageList()
 		self.clipboard = None
-		self.tempFiles = os.path.join(os.environ["temp"], "tesseract-"+self.__randomizePath())
+		self.tempFiles = os.path.join(os.environ["temp"], "tesseract-"+randomizePath())
 		os.mkdir(self.tempFiles)
-
-	def __randomizePath(self):
-		folder = ""
-		for i in range (16):
-			folder = folder+choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-		return folder
 
 	def bind(self, event, handler):
 		self.pages.evtDocumentChange = event
@@ -206,7 +207,7 @@ class DocumentHandler():
 
 	def recognizePDF(self, path, feedback=None):
 		if self.flagCancelled: return
-		basenamePNG = self.__randomizePath()
+		basenamePNG = randomizePath()
 		basenamePDF = os.path.basename(path)
 		command = "{} -r 150 -gray \"{}\" \"{}\"".format(
 			config["binaries"]["xpdf-tools"],
@@ -239,7 +240,7 @@ class DocumentHandler():
 			r = self.recognizePDF(filepath, feedback=feedback)
 			return r
 		if not name: name = os.path.basename(filepath)
-		recogfile = os.path.join(self.tempFiles, "recognized"+self.__randomizePath())
+		recogfile = os.path.join(self.tempFiles, "recognized"+randomizePath())
 		command = "{exe} \"{filein}\" \"{fileout}\" --dpi 150 --psm 1 --oem 3 -c tessedit_do_invert=0 -l {lng} quiet".format(
 			exe = config["binaries"]["tesseract"],
 			filein = filepath,
@@ -262,7 +263,7 @@ class DocumentHandler():
 
 	def digitalize(self):
 		if self.flagCancelled: return
-		outputFile = os.path.join(self.tempFiles, "image-"+self.__randomizePath()+".jpg")
+		outputFile = os.path.join(self.tempFiles, "image-"+randomizePath()+".jpg")
 		command = "{} /w 0 /h 0 /dpi {} /color {} /format JPG /output {}".format(
 			config["binaries"]["wia-cmd-scanner"],
 			config["scanner"]["resolution"],
@@ -290,7 +291,7 @@ class DocumentHandler():
 		with ZipFile(path, "w") as z:
 			pagelist = []
 			for page in self.pages:
-				filename = self.__randomizePath()+os.path.splitext(os.path.basename(page.imagefile))[1]
+				filename = randomizePath()+os.path.splitext(os.path.basename(page.imagefile))[1]
 				pagelist.append((page.name, filename, page.recognized))
 				z.write(page.imagefile, filename, compress_type=ZIP_DEFLATED)
 			pickfile = os.path.join(self.tempFiles, ".pagelist")
@@ -350,5 +351,129 @@ class DocumentHandler():
 	@property
 	def isEmpty(self):
 		return True if len(self.pages) == 0 else False
+
+class ProcessNewPages(Thread):
+	def __init__(self, source="scanner", eventTerminate=None, eventFeedback=None, eventHandler=None, tempFiles="", *args, **kwargs):
+		super(ProcessNewPages, self).__init__(*args, **kwargs)
+		self.setDaemon(True)
+		self.source = source
+		self.eventTerminate = eventTerminate
+		self.eventFeedback = eventFeedback
+		self.eventHandler = eventHandler
+		self.tempFiles = tempFiles
+		self.subprocess = None
+		self.flagCancel = False
+		self.error = ""
+		self.lockPages = Lock()
+		self.pages = PageList()
+
+	def run(self):
+		images = []
+		if self.source == "scanner":
+			images.append(self.scan())
+		elif os.path.splitext(self.source)[-1].lower() == ".pdf":
+			images.extend(self.extractPagesFromPDF())
+		else:
+			images.append(self.source)
+		for file, name in images:
+			if self.error:
+				wx.PostEvent(self.EventHandler, self.eventTerminate)
+				return
+			self.recognize(file, name)
+		wx.PostEvent(self.EventHandler, self.eventTerminate)
+
+	def kill(self):
+		self.flagCancel = True
+		if self.subprocess: self.subprocess.kill()
+
+	def push(self):
+		self.lockPages.acquire()
+		p = self.pages.__pages.copy()
+		self.lockPages.release()
+		return p
+
+	def scan(self):
+		if self.flagCancel:
+			self.error = _("Cancelled by user")
+			return
+		outputFile = os.path.join(self.tempFiles, "image-"+randomizePath()+".jpg")
+		command = "{} /w 0 /h 0 /dpi {} /color {} /format JPG /output {}".format(
+			config["binaries"]["wia-cmd-scanner"],
+			config["scanner"]["resolution"],
+			config["scanner"]["color"],
+			outputFile
+		)
+		si = subprocess.STARTUPINFO()
+		si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+		self.subprocess = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=si)
+		stdout, stderr = self.subprocess.communicate()
+		if self.flagCancel:
+			self.error = _("Cancelled by user")
+			return
+		if not os.path.exists(outputFile):
+			self.error = stdout
+			return
+		return (outputFile, _("Digitalized image {color} {ppp}").format(
+			color = config["scanner"]["color"],
+			ppp = config["scanner"]["resolution"]
+		))
+
+	def extractPagesFromPDF(self):
+		if self.flagCancel:
+			self.error = _("Cancelled by user")
+			return []
+		basenamePNG = randomizePath()
+		basenamePDF = os.path.basename(self.source)
+		command = "{exe} -r 300 -gray \"{input}\" \"{output}\"".format(
+			exe=config["binaries"]["xpdf-tools"],
+			input=self.source,
+			output=os.path.join(self.tempFiles, basenamePNG)
+		)
+		si = subprocess.STARTUPINFO()
+		si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+		self.subprocess = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=si)
+		stdout, stderr = self.subprocess.communicate()
+		if stderr:
+			self.error = _("Failed to extract pages from file {}").format(basenamePDF)
+			return []
+		images = []
+		for page in filter(lambda f: f.startswith(basenamePNG), os.listdir(self.tempFiles)):
+			if self.flagCancel:
+				self.error = _("Cancelled by user")
+				return images
+			numpage = int(os.path.splitext(page)[0].split("-")[1])
+			pagename = _("{file} page {npage}").format(file=basenamePDF, npage=numpage)
+			images.append((os.path.join(self.tempFiles, page), pagename))
+		return images
+
+	def recognize(self, filepath, name):
+		if self.flagCancel:
+			self.error = _("Cancelled by user")
+			return
+		recogfile = os.path.join(self.tempFiles, "recognized"+randomizePath())
+		command = "{exe} \"{filein}\" \"{fileout}\" --dpi 150 --psm 1 --oem 3 -c tessedit_do_invert=0 -l {lng} quiet".format(
+			exe = config["binaries"]["tesseract"],
+			filein = filepath,
+			fileout = recogfile,
+			lng = tesseractLanguage
+		)
+		si = subprocess.STARTUPINFO()
+		si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+		self.subprocess = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=si)
+		stdout, stderr = self.subprocess.communicate()
+		if stderr:
+			self.error = decode(stderr)
+			return
+		if self.flagCancel:
+			self.error = _("Cancelled by user")
+			return
+		with open(recogfile+".txt", "rb") as f:
+			text = f.read().decode("ansi").split("\n")
+		# Suppression of excess blank lines.
+		text = "\n".join(filter(lambda l: len(l.replace(" ", ""))>0, text))
+		if not self.flagCancel:
+			self.lockPages.acquire()
+			self.pages.append(Page(name, filepath, text.encode("ansi")))
+			self.lockPages.release()
 
 doc = DocumentHandler()
