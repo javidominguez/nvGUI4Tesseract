@@ -35,21 +35,23 @@ import gettext
 
 class SubprocessDialog(wx.Dialog):
 	def __init__(self, *args, **kwds):
-		self.npages = 0
-		self.result = None
 		# begin wxGlade: SubprocessDialog.__init__
 		kwds["style"] = kwds.get("style", 0) | wx.CAPTION
 		wx.Dialog.__init__(self, *args, **kwds)
-		self.SetTitle(_("Digitalizing"))
+		self.SetTitle(_("Background"))
 
-		sizer = wx.BoxSizer(wx.HORIZONTAL)
+		sizer = wx.BoxSizer(wx.VERTICAL)
 
-		self.numpageLabel = wx.StaticText(self, wx.ID_ANY, "")
-		self.numpageLabel.Hide()
-		sizer.Add(self.numpageLabel, 0, 0, 0)
-
-		self.feedbackLabel = wx.StaticText(self, wx.ID_ANY, _("Getting image from scanner, please wait."))
+		self.feedbackLabel = wx.StaticText(self, wx.ID_ANY, "")
 		sizer.Add(self.feedbackLabel, 0, 0, 0)
+
+		sizerButton = wx.StdDialogButtonSizer()
+		sizer.Add(sizerButton, 0, 0, 0)
+
+		self.button = wx.Button(self, wx.ID_ANY, _("Cancel"))
+		sizerButton.Add(self.button, 0, 0, 0)
+
+		sizerButton.Realize()
 
 		self.SetSizer(sizer)
 		sizer.Fit(self)
@@ -58,36 +60,30 @@ class SubprocessDialog(wx.Dialog):
 		self.Centre()
 		# end wxGlade
 
-	def ShowModal(self, source="scanner"):
+		self.button.Bind(wx.EVT_BUTTON, self.onCancel)
+
+	def ShowModal(self, source="scanner", title=_("Digitalizing"), label=_("Getting image from scanner, please wait.")):
+		self.SetTitle(title)
+		self.feedbackLabel.SetLabelText(label)
 		self.Bind(wx.EVT_CLOSE, self.onCancel)
 		Event_TerminatedThread, EVT_TERMINATED_THREAD = wx.lib.newevent.NewEvent()
 		self.Bind(EVT_TERMINATED_THREAD, self.onTerminatedThread)
-		evt = Event_TerminatedThread()
-		self.npages = len(doc.pages)
-		self.scan = True if source == "scanner" else False
-		def runSubprocess():
-			doc.flagCancelled = False
-			if source == "scanner":
-				self.result = doc.digitalize()
-			else:
-				self.SetTitle(_("Recognizing"))
-				self.feedbackLabel.SetLabelText(_("Processing the file {}").format(os.path.basename(source)))
-				self.result = doc.recognize(source, feedback=self.numpageLabel)
-			wx.PostEvent(self.GetEventHandler(), evt)
-		self.subprocess = Thread(target=runSubprocess)
-		self.subprocess.daemon = True
-		self.subprocess.start()
+		evt_terminate = Event_TerminatedThread()
+		Event_Feedback, EVT_FEEDBACK = wx.lib.newevent.NewEvent()
+		self.Bind(EVT_FEEDBACK, self.onFeedback)
+		evt_feedback = Event_Feedback(numpage=0)
+		doc.getNewPages(source, eventTerminate=evt_terminate, eventFeedback=evt_feedback, eventHandler=self.GetEventHandler())
 		super(SubprocessDialog, self).ShowModal()
+
+	def onFeedback(self, evt):
+		nvda.message(_("page {}").format(evt.numpage))
 
 	def onTerminatedThread(self, evt):
 		self.Unbind(wx.EVT_CLOSE)
 		self.Close()
 
 	def onCancel(self, evt):
-		doc.flagCancelled = True
-		self.result = _("Cancelled by user")
-		if self.scan and  len(doc.pages) > self.npages:
-			doc.pages.pop(-1)
+		doc.stopSubprocess()
 		self.Unbind(wx.EVT_CLOSE)
 		self.Close()
 # end of class SubprocessDialog
@@ -480,8 +476,9 @@ class MainFrame(wx.Frame):
 			nvda.message(_("Page {} of {}").format(doc.pages.index+1, len(doc.pages)))
 		elif hotkey(340): # F1
 			self.onHelpDoc(event)
+		else:
+			event.Skip()
 		# print("keycode: {}".format(event.GetKeyCode()))
-		event.Skip()
 
 	def onWindowSize(self, event):
 		self.text_ctrl.SetSize(self.Size-(10,80))
@@ -595,12 +592,11 @@ class MainFrame(wx.Frame):
 		r = None
 		if dlg.ShowModal() == wx.ID_OK:
 			spdlg = SubprocessDialog(parent=self)
-			spdlg.ShowModal(dlg.Path)
-			r = spdlg.result
+			spdlg.ShowModal(dlg.Path, title=_("Recognizing"), label=_("Processing the file {}").format(os.path.basename(dlg.Path)))
 			spdlg.Destroy()
 		dlg.Destroy()
-		if r:
-			wx.MessageBox(decode(r), _("Something went wrong"))
+		doc.pullNewPages()
+		self.showStatusMessage()
 		event.Skip()
 
 	def onMenuGetDigitalize(self, event):  # wxGlade: MainFrame.<event_handler>
@@ -608,15 +604,28 @@ class MainFrame(wx.Frame):
 			if not self.onMenuSettings(event): return
 		dlg = SubprocessDialog(parent=self)
 		dlg.ShowModal()
-		r = dlg.result
-		if r:
-			wx.MessageBox(decode(r), _("Something went wrong"))
+		dlg.Destroy()
+		doc.pullNewPages()
+		self.showStatusMessage()
 		event.Skip()
+
+	def showStatusMessage(self):
+		if doc.subprocess.flagCancel:
+			n = len(doc.subprocess.pagesCache)
+			if n == 0:
+				msg = _("No pages added.")
+			elif n == 1:
+				msg = _("One page added.")
+			else:
+				msg = _("Added {} pages.").format(n)
+			msg = "\n".join([_("The process was interrupted before finishing."), msg])
+			wx.MessageBox(msg, _("Canceled by user"))
+		elif doc.subprocess.error:
+			wx.MessageBox(decode(doc.subprocess.error), _("Something went wrong"))
 
 	def onMenuSettings(self, event):  # wxGlade: MainFrame.<event_handler>
 		dlg = ScanSettingsDialog(parent=self)
 		if dlg.ShowModal() == wx.ID_OK:
-			print ("save configs")
 			config["general"]["showsettings"] = 1 if dlg.checkbox.GetValue() else 0
 			config["scanner"]["color"] = ["RGB","GRAY","BW"][dlg.radioBoxColor.GetSelection()]
 			config["scanner"]["resolution"] = dlg.radioBoxPPP.GetStringSelection()

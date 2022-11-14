@@ -54,11 +54,14 @@ class Page():
 		self.recognized = recognized
 
 class PageList():
-	__pages = []
-	__index = -1
-
-	def __init__(self, pages=[]):
-		if pages: self.add(pages)
+	def __init__(self, pages=[], name=""):
+		self.name = name
+		if pages:
+			self.add(pages)
+		else:
+			self.__pages = []
+		self.__index = -1
+		self.__modified = False
 		self.evtDocumentChange = None
 		self.EventHandler = None
 
@@ -67,12 +70,15 @@ class PageList():
 
 	def __getitem__(self, n):
 		return self.__pages[n]
+	def copy(self):
+		return self.__pages.copy()
 
-	def add(self, item):
+	def add(self, item, flagModified=True):
 		if isinstance(item, Page):
 			self.__pages.append(item)
 			self.__index = len(self.__pages)-1
 			if self.EventHandler and self.evtDocumentChange: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+			self.__modified = flagModified
 			return 1
 		if isinstance(item, PageList):
 			item = item.__pages
@@ -81,6 +87,7 @@ class PageList():
 			for i in range(x):
 				if isinstance(item[i], Page):
 					self.__pages.append(item[i])
+					self.__modified = flagModified
 				else:
 					raise TypeError("item {} is not a Page object".format(i))
 		else:
@@ -95,9 +102,11 @@ class PageList():
 		self.__pages.append(item)
 		self.__index = len(self.__pages)-1
 		if self.EventHandler and self.evtDocumentChange: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+		self.__modified = True
 
 	def pop(self, index):
 		p = self.__pages.pop(index)
+		self.__modified = True
 		bottom = len(self.__pages)
 		if self.__index > bottom:
 			self.__index = bottom
@@ -112,6 +121,7 @@ class PageList():
 				index, len(self.__pages)
 			))
 		self.__pages.insert(index, item)
+		self.__modified = True
 		self.__index = index
 		if self.EventHandler and self.evtDocumentChange: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
 
@@ -155,7 +165,12 @@ class PageList():
 	def clear(self):
 		self.__pages = []
 		self.__index = -1
+		self.__modified = False
 		if self.EventHandler and self.evtDocumentChange: wx.PostEvent(self.EventHandler, self.evtDocumentChange)
+
+	@property
+	def modified(self):
+		return self.__modified
 
 	@property
 	def current(self):
@@ -191,12 +206,12 @@ class DocumentHandler():
 	def __init__(self):
 		self.name = _("untitled")
 		self.savedDocumentPath = ""
-		self.flagModified = False
 		self.flagCancelled = False
-		self.pages = PageList()
+		self.pages = PageList([], "del documento")
 		self.clipboard = None
 		self.tempFiles = os.path.join(os.environ["temp"], "tesseract-"+randomizePath())
 		os.mkdir(self.tempFiles)
+		self.subprocess = None
 
 	def bind(self, event, handler):
 		self.pages.evtDocumentChange = event
@@ -259,7 +274,19 @@ class DocumentHandler():
 		text = "\n".join(filter(lambda l: len(l.replace(" ", ""))>0, text))
 		if not self.flagCancelled:
 			self.pages.append(Page(name, filepath, text.encode("ansi")))
-			self.flagModified = True
+			#@ self.flagModified = True
+
+	def getNewPages(self, source="scanner", eventTerminate=None, eventFeedback=None, eventHandler=None):
+		self.subprocess = ProcessNewPages(source, eventTerminate=eventTerminate, eventFeedback=eventFeedback, eventHandler=eventHandler, tempFiles=self.tempFiles)
+		self.subprocess.start()
+
+	def stopSubprocess(self):
+		if self.subprocess and self.subprocess.isAlive():
+			self.subprocess.kill()
+
+	def pullNewPages(self):
+		if self.subprocess:
+			self.pages.add(self.subprocess.push())
 
 	def digitalize(self):
 		if self.flagCancelled: return
@@ -284,7 +311,7 @@ class DocumentHandler():
 		))
 
 	def exportText(self):
-		return b'\n'.join([page.recognized for page in self.pages])
+		return b'\n'.join(self.pages.recognized)
 
 	def save(self, path):
 		self.savedDocumentPath = path
@@ -298,13 +325,12 @@ class DocumentHandler():
 			with open(pickfile, "wb") as f:
 				pickle.dump(pagelist, f, pickle.HIGHEST_PROTOCOL)
 			z.write(pickfile, ".pagelist", ZIP_DEFLATED)
-		self.flagModified = False
+		self.pages.__modified = False
 		self.name = os.path.splitext(os.path.basename(path))[0]
 
 	def reset(self):
 		self.name = _("untitled")
 		self.savedDocumentPath = ""
-		self.flagModified = False
 		self.flagCancelled = False
 		self.pages.clear()
 		for folder, subfolders, files in os.walk(self.tempFiles):
@@ -319,10 +345,8 @@ class DocumentHandler():
 			pagelist = pickle.load(f)
 		self.name = os.path.splitext(os.path.basename(path))[0]
 		self.savedDocumentPath = path
-		for page in pagelist:
-			name, file, recognized = page
-			self.pages.append(Page(name, os.path.join(self.tempFiles, file), recognized))
-			self.pages.first()
+		self.pages.add([Page(name, file, recognized) for name, file, recognized in pagelist], flagModified=False)
+		self.pages.first()
 
 	def exportAllImages(self, path):
 		folder = os.path.join(path, self.name)
@@ -352,6 +376,10 @@ class DocumentHandler():
 	def isEmpty(self):
 		return True if len(self.pages) == 0 else False
 
+	@property
+	def flagModified(self):
+		return self.pages.modified
+
 class ProcessNewPages(Thread):
 	def __init__(self, source="scanner", eventTerminate=None, eventFeedback=None, eventHandler=None, tempFiles="", *args, **kwargs):
 		super(ProcessNewPages, self).__init__(*args, **kwargs)
@@ -359,27 +387,35 @@ class ProcessNewPages(Thread):
 		self.source = source
 		self.eventTerminate = eventTerminate
 		self.eventFeedback = eventFeedback
-		self.eventHandler = eventHandler
+		self.EventHandler = eventHandler
 		self.tempFiles = tempFiles
 		self.subprocess = None
 		self.flagCancel = False
-		self.error = ""
+		self.__error = ""
 		self.lockPages = Lock()
-		self.pages = PageList()
+		self.pagesCache = PageList([], "del hilo")
 
 	def run(self):
 		images = []
 		if self.source == "scanner":
-			images.append(self.scan())
+			images.extend(self.scan())
 		elif os.path.splitext(self.source)[-1].lower() == ".pdf":
 			images.extend(self.extractPagesFromPDF())
 		else:
-			images.append(self.source)
+			images.append((self.source, os.path.basename(self.source)))
+		i = 0
 		for file, name in images:
-			if self.error:
+			i = i+1
+			if self.__error:
 				wx.PostEvent(self.EventHandler, self.eventTerminate)
 				return
-			self.recognize(file, name)
+			result = self.recognize(file, name)
+			if result and isinstance(result, Page) and not self.flagCancel:
+				self.lockPages.acquire()
+				self.pagesCache.add(result)
+				self.lockPages.release()
+				self.eventFeedback.numpage = i
+				wx.PostEvent(self.EventHandler, self.eventFeedback)
 		wx.PostEvent(self.EventHandler, self.eventTerminate)
 
 	def kill(self):
@@ -388,14 +424,14 @@ class ProcessNewPages(Thread):
 
 	def push(self):
 		self.lockPages.acquire()
-		p = self.pages.__pages.copy()
+		p = self.pagesCache.copy()
 		self.lockPages.release()
 		return p
 
 	def scan(self):
 		if self.flagCancel:
-			self.error = _("Cancelled by user")
-			return
+			#@ self.error = _("Cancelled by user")
+			return []
 		outputFile = os.path.join(self.tempFiles, "image-"+randomizePath()+".jpg")
 		command = "{} /w 0 /h 0 /dpi {} /color {} /format JPG /output {}".format(
 			config["binaries"]["wia-cmd-scanner"],
@@ -408,19 +444,19 @@ class ProcessNewPages(Thread):
 		self.subprocess = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=si)
 		stdout, stderr = self.subprocess.communicate()
 		if self.flagCancel:
-			self.error = _("Cancelled by user")
-			return
+			#@ self.error = _("Cancelled by user")
+			return []
 		if not os.path.exists(outputFile):
-			self.error = stdout
-			return
-		return (outputFile, _("Digitalized image {color} {ppp}").format(
+			self.__error = stdout
+			return []
+		return [(outputFile, _("Digitalized image {color} {ppp}").format(
 			color = config["scanner"]["color"],
 			ppp = config["scanner"]["resolution"]
-		))
+		))]
 
 	def extractPagesFromPDF(self):
 		if self.flagCancel:
-			self.error = _("Cancelled by user")
+			#@ self.error = _("Cancelled by user")
 			return []
 		basenamePNG = randomizePath()
 		basenamePDF = os.path.basename(self.source)
@@ -433,22 +469,25 @@ class ProcessNewPages(Thread):
 		si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 		self.subprocess = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=si)
 		stdout, stderr = self.subprocess.communicate()
+		if self.flagCancel:
+			#@ self.error = _("Cancelled by user")
+			return []
 		if stderr:
-			self.error = _("Failed to extract pages from file {}").format(basenamePDF)
+			self.__error = _("Failed to extract pages from file {}").format(basenamePDF)
 			return []
 		images = []
 		for page in filter(lambda f: f.startswith(basenamePNG), os.listdir(self.tempFiles)):
 			if self.flagCancel:
-				self.error = _("Cancelled by user")
+				#@ self.error = _("Cancelled by user")
 				return images
 			numpage = int(os.path.splitext(page)[0].split("-")[1])
 			pagename = _("{file} page {npage}").format(file=basenamePDF, npage=numpage)
-			images.append((os.path.join(self.tempFiles, page), pagename))
+			images.append((os.path.join(self.tempFiles, page), pagename, ))
 		return images
 
 	def recognize(self, filepath, name):
 		if self.flagCancel:
-			self.error = _("Cancelled by user")
+			#@ self.error = _("Cancelled by user")
 			return
 		recogfile = os.path.join(self.tempFiles, "recognized"+randomizePath())
 		command = "{exe} \"{filein}\" \"{fileout}\" --dpi 150 --psm 1 --oem 3 -c tessedit_do_invert=0 -l {lng} quiet".format(
@@ -462,18 +501,19 @@ class ProcessNewPages(Thread):
 		self.subprocess = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, startupinfo=si)
 		stdout, stderr = self.subprocess.communicate()
 		if stderr:
-			self.error = decode(stderr)
+			self.__error = decode(stderr)
 			return
 		if self.flagCancel:
-			self.error = _("Cancelled by user")
+			#@ self.error = _("Cancelled by user")
 			return
 		with open(recogfile+".txt", "rb") as f:
 			text = f.read().decode("ansi").split("\n")
 		# Suppression of excess blank lines.
 		text = "\n".join(filter(lambda l: len(l.replace(" ", ""))>0, text))
-		if not self.flagCancel:
-			self.lockPages.acquire()
-			self.pages.append(Page(name, filepath, text.encode("ansi")))
-			self.lockPages.release()
+		return Page(name, filepath, text.encode("ansi"))
+
+	@property
+	def error(self):
+		return self.__error
 
 doc = DocumentHandler()
