@@ -33,4 +33,9 @@ nvGUI para Tesseract hace uso de software de terceras partes con las siguientes 
 * [Tesseract](https://github.com/UB-Mannheim/tesseract/), [Apache 2.0](https://directory.fsf.org/wiki/License:Apache-2.0)  
 * [wia-cmd-scanner](https://github.com/nagimov/wia-cmd-scanner/), [GPL 3.0](https://www.gnu.org/licenses/gpl-3.0.html)  
 * [xpdf-tools](http://www.xpdfreader.com/), [GPL 2.0](https://www.gnu.org/licenses/old-licenses/lgpl-2.0.html)  
-Asimismo, todos los módulos y librerías Python usados son open source.
+* nvdaControllerClient de [NVDA](https://www.nvaccess.org), [GPL 2.0](https://www.gnu.org/licenses/old-licenses/lgpl-2.0.html)  
+Asimismo, todos los módulos y librerías Python usados son open source.  
+  
+### Descargo de responsabilidad
+
+Este software se ofrece "tal cual", sin garantías de ningún tipo, ni explícitas ni implícitas. Ni los autores o colaboradores ni quienes distribuyan el software deberán responder en ningún caso por reclamaciones, daños, pérdida de datos u otras responsabilidades, ya sean contractuales, extracontractuales o de cualquier otro tipo, derivados del software, de su uso o de cualquier otra actividad realizada con el mismo o relacionados con dicho software.

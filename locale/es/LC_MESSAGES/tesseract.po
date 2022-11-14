@@ -1,8 +1,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: TesseractOCR-miniGUI\n"
-"POT-Creation-Date: 2022-11-13 18:48+0100\n"
-"PO-Revision-Date: 2022-11-13 18:50+0100\n"
+"POT-Creation-Date: 2022-11-14 18:54+0100\n"
+"PO-Revision-Date: 2022-11-14 19:00+0100\n"
 "Last-Translator: \n"
 "Language-Team: Javi Domínguez\n"
 "Language: es\n"
@@ -14,56 +14,55 @@ msgstr ""
 "X-Poedit-Basepath: ../../..\n"
 "X-Poedit-SearchPath-0: .\n"
 
-#: gui.py:43
+#: gui.py:44
+msgid "Background"
+msgstr "Segundo plano"
+
+#: gui.py:54
+msgid "Cancel"
+msgstr "&Cancelar"
+
+#: gui.py:68
 msgid "Digitalizing"
 msgstr "Digitalizando"
 
-#: gui.py:51
+#: gui.py:68
 msgid "Getting image from scanner, please wait."
 msgstr "Obteniendo imagen del escáner; por favor, espere."
 
-#: gui.py:73
-msgid "Recognizing"
-msgstr "Reconociendo"
+#: gui.py:82 handler.py:245
+msgid "page {}"
+msgstr "Página {}"
 
-#: gui.py:74
-msgid "Processing the file {}"
-msgstr "Procesando el archivo {}"
-
-#: gui.py:88 handler.py:279 handler.py:397 handler.py:411 handler.py:423
-#: handler.py:442 handler.py:451 handler.py:468
-msgid "Cancelled by user"
-msgstr "Cancelado por el usuario"
-
-#: gui.py:101
+#: gui.py:100
 msgid "Move up"
 msgstr "Mover arriba"
 
-#: gui.py:106
+#: gui.py:105
 msgid "Move down"
 msgstr "Mover abajo"
 
-#: gui.py:111
+#: gui.py:110
 msgid "Copy"
 msgstr "Copiar"
 
-#: gui.py:116
+#: gui.py:115
 msgid "Cut"
 msgstr "Cortar"
 
-#: gui.py:121
+#: gui.py:120
 msgid "Paste"
 msgstr "Pegar"
 
-#: gui.py:125
+#: gui.py:124
 msgid "Remove"
 msgstr "Eliminar"
 
-#: gui.py:185
+#: gui.py:184
 msgid "Confirm"
 msgstr "Confirmar"
 
-#: gui.py:189
+#: gui.py:188
 msgid ""
 "A file with the same name already exists in the specified location; do you "
 "want to replace it?"
@@ -71,11 +70,11 @@ msgstr ""
 "Ya existe un archivo con el mismo nombre en la ubicación especificada; "
 "¿desea reemplazarlo?"
 
-#: gui.py:197 gui.py:239
+#: gui.py:196 gui.py:239
 msgid "&Yes"
 msgstr "&Sí"
 
-#: gui.py:201 gui.py:243
+#: gui.py:200 gui.py:243
 msgid "&No"
 msgstr "&No"
 
@@ -87,262 +86,285 @@ msgstr "¿Guardar cambios?"
 msgid "Do you want to save changes in the document {}"
 msgstr "¿Desea guardar los cambios en el documento?"
 
-#: gui.py:247 gui.py:305
+#: gui.py:247 gui.py:306
 msgid "&Cancel"
 msgstr "&Cancelar"
 
-#: gui.py:272
+#: gui.py:273
 msgid "Scanner Settings"
 msgstr "Ajustes del escáner"
 
-#: gui.py:279
+#: gui.py:280
 msgid "Color"
 msgstr "Color"
 
-#: gui.py:279
+#: gui.py:280
 msgid "RGB color"
 msgstr "Color RGB"
 
-#: gui.py:279
+#: gui.py:280
 msgid "Gray scale"
 msgstr "Escala de grises"
 
-#: gui.py:279
+#: gui.py:280
 msgid "Black and white"
 msgstr "Blanco y negro"
 
-#: gui.py:284
+#: gui.py:285
 msgid "Resolution"
 msgstr "Resolución"
 
-#: gui.py:284
+#: gui.py:285
 msgid "100"
 msgstr ""
 
-#: gui.py:284
+#: gui.py:285
 msgid "150"
 msgstr ""
 
-#: gui.py:284
+#: gui.py:285
 msgid "300"
 msgstr ""
 
-#: gui.py:292
+#: gui.py:293
 msgid "Show this dialog every time a page is scanned?"
 msgstr "¿Mostrar este cuadro de diálogo cada vez que se escanea una página?"
 
-#: gui.py:301
+#: gui.py:302
 #, fuzzy
 #| msgid "OK"
 msgid "&OK"
 msgstr "&Aceptar"
 
-#: gui.py:326
+#: gui.py:327
 msgid "TesseractOCR"
 msgstr ""
 
-#: gui.py:332
+#: gui.py:333
 msgid "New... (ctrl+n)"
 msgstr "nuevo... (ctrl+n)"
 
-#: gui.py:334
+#: gui.py:335
 msgid "Open... (ctrl+o)"
 msgstr "Abrir... (ctrl+o)"
 
-#: gui.py:336
+#: gui.py:337
 msgid "Save... (control+s)"
 msgstr "Guardar... (control+s)"
 
-#: gui.py:338
+#: gui.py:339
 msgid "Save as... (ctrl+shift+s)"
 msgstr "Guardar como... (ctrl+shift+s)"
 
-#: gui.py:341
+#: gui.py:342
 msgid "Recognized text (ctrl+shift+x)"
 msgstr "Texto reconocido (ctrl+shift+x)"
 
-#: gui.py:343 gui.py:349
+#: gui.py:344 gui.py:350
 msgid "Images"
 msgstr "Imágenes"
 
-#: gui.py:345
+#: gui.py:346
 msgid "Export"
 msgstr "Exportar"
 
-#: gui.py:347
+#: gui.py:348
 msgid "Text"
 msgstr "Texto"
 
-#: gui.py:351
+#: gui.py:352
 msgid "Print"
 msgstr "Imprimir"
 
-#: gui.py:352
+#: gui.py:353
 msgid "Scan settings"
 msgstr "Ajustes del escáner"
 
-#: gui.py:354
+#: gui.py:355
 msgid "Close (ctrl+q)"
 msgstr "Cerrar (ctrl+q)"
 
-#: gui.py:354
+#: gui.py:355
 msgid "Closes the application"
 msgstr "Cierra la aplicación"
 
-#: gui.py:356
+#: gui.py:357
 msgid "File"
 msgstr "Archivo"
 
-#: gui.py:358
+#: gui.py:359
 msgid "Load file (ctrl+f)"
 msgstr "Cargar archivo... (ctrl+f)"
 
-#: gui.py:360
+#: gui.py:361
 msgid "Digitalize image (ctrl+d)"
 msgstr "Digitalizar imagen (ctrl+d)"
 
-#: gui.py:362
+#: gui.py:363
 msgid "Get"
 msgstr "Obtener"
 
-#: gui.py:364
+#: gui.py:365
 msgid "Recognized text"
 msgstr "Texto reconocido"
 
-#: gui.py:366
+#: gui.py:367
 msgid "List of pages"
 msgstr "Lista de páginas"
 
-#: gui.py:368
+#: gui.py:369
 msgid "View"
 msgstr "Ver"
 
-#: gui.py:370
+#: gui.py:371
 msgid "Documentation"
 msgstr "Documentación"
 
-#: gui.py:372
+#: gui.py:373
 msgid "License"
 msgstr "Licencia"
 
-#: gui.py:374
+#: gui.py:375
 msgid "View on Github"
 msgstr "Ver en Github"
 
-#: gui.py:376
+#: gui.py:377
 msgid "About..."
 msgstr "Acerca de..."
 
-#: gui.py:378
+#: gui.py:379
 msgid "Help"
 msgstr "Ayuda"
 
-#: gui.py:390
+#: gui.py:391
 msgid "frame_statusbar"
 msgstr ""
 
-#: gui.py:393 gui.py:427
+#: gui.py:394 gui.py:428
 msgid "Ready"
 msgstr "Listo"
 
-#: gui.py:440 gui.py:477 gui.py:480
+#: gui.py:441 gui.py:479 gui.py:485
 msgid "Page {} of {}"
 msgstr "Pájina {} de {}"
 
-#: gui.py:492
+#: gui.py:481 gui.py:487 gui.py:500
 msgid "The document is empty"
 msgstr "El documento está vacío"
 
-#: gui.py:531
+#: gui.py:539
 msgid "New document {}"
 msgstr "Nuevo documento {}"
 
-#: gui.py:546
+#: gui.py:554
 msgid "Open document"
 msgstr "Abrir documento"
 
-#: gui.py:549 gui.py:572
+#: gui.py:557 gui.py:580
 msgid "TesseractOCR documents|*.tes"
 msgstr "Documentos TesseractOCR|*.tes"
 
-#: gui.py:561
+#: gui.py:569
 msgid "Document saved"
 msgstr "Documento guardado"
 
-#: gui.py:569
+#: gui.py:577
 msgid "Save document"
 msgstr "Guardar documento"
 
-#: gui.py:590
+#: gui.py:598
 msgid "Load image"
 msgstr "Cargar imagen"
 
-#: gui.py:603 gui.py:613
+#: gui.py:606
+msgid "Recognizing"
+msgstr "Reconociendo"
+
+#: gui.py:606
+msgid "Processing the file {}"
+msgstr "Procesando el archivo {}"
+
+#: gui.py:627
+msgid "No pages added."
+msgstr "No se añadió ninguna página."
+
+#: gui.py:629
+msgid "One page added."
+msgstr "Se añadió una página."
+
+#: gui.py:631
+msgid "Added {} pages."
+msgstr "Se añadieron {} páginas"
+
+#: gui.py:632
+msgid "The process was interrupted before finishing."
+msgstr "Se interrumpió el proceso antes de terminar."
+
+#: gui.py:633
+msgid "Canceled by user"
+msgstr "Cancelado por el usuario"
+
+#: gui.py:635
 msgid "Something went wrong"
 msgstr "Algo salió mal"
 
-#: gui.py:633
+#: gui.py:653
 msgid "Save recognized text"
 msgstr "Guardar el texto reconocido"
 
-#: gui.py:636
+#: gui.py:656
 msgid "Text files|*.txt"
 msgstr "Archivos de texto|*.txt"
 
-#: gui.py:646
+#: gui.py:666
 msgid "Choose a folder where to save the document images:"
 msgstr "Elija una carpeta donde guardar las imágenes del documento:"
 
-#: gui.py:649
+#: gui.py:669
 msgid "Images saved successfully"
 msgstr "Imágenes guardadas correctamente"
 
-#: gui.py:649
+#: gui.py:669
 msgid "Succes"
 msgstr "Correcto"
 
-#: gui.py:651
+#: gui.py:671
 msgid "An error occurred and the images have not been saved"
 msgstr "Ocurrió un error y las imágenes no se han guardado"
 
-#: gui.py:651
+#: gui.py:671
 msgid "Error"
 msgstr ""
 
-#: gui.py:683
+#: gui.py:705
 msgid "About"
 msgstr "Acerca de"
 
-#: gui.py:700
+#: gui.py:723
 msgid "Document Pages"
 msgstr "Páginas del documento"
 
-#: handler.py:192 handler.py:305
+#: handler.py:204 handler.py:282
 msgid "untitled"
 msgstr "Sin título"
 
-#: handler.py:222 handler.py:437
+#: handler.py:377
+#, python-brace-format
+msgid "Digitalized image {color} {ppp}"
+msgstr "Imagen digitalizada {color} {ppp}ppp"
+
+#: handler.py:399
 msgid "Failed to extract pages from file {}"
 msgstr "Error al extraer páginas del archivo {}"
 
-#: handler.py:228 handler.py:341
-msgid "page {}"
-msgstr "Página {}"
-
-#: handler.py:231 handler.py:445
+#: handler.py:406
 #, fuzzy, python-brace-format
 #| msgid "page {}"
 msgid "{file} page {npage}"
 msgstr "Página {}"
 
-#: handler.py:234
-msgid "Failed recognition of page {}"
-msgstr "Falló el reconocimiento de la página {}"
-
-#: handler.py:281 handler.py:416
-#, python-brace-format
-msgid "Digitalized image {color} {ppp}"
-msgstr "Imagen digitalizada {color} {ppp}ppp"
+#~ msgid "Failed recognition of page {}"
+#~ msgstr "Falló el reconocimiento de la página {}"
 
 #~ msgid "No"
 #~ msgstr "No"

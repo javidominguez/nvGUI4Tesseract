@@ -8,26 +8,29 @@
 # This file is covered by the GNU General Public License.
 # See the file COPYING for more details.
 
-appname = "TesseractOCR"
+appname = "User interface for Tesseract OCR"
 author = "Javi Domínguez"
-version = "1.0A"
+version = "1.0B"
 url = "www.github.com/javidominguez/tesseractOCR-miniGUI"
 
-import wx
 import os
 import webbrowser
-import nvdaControllerClient as nvda
-import wx.lib.newevent
 from threading import Thread
-from handler import *
 
+import wx
+import wx.lib.newevent
+
+import nvdaControllerClient as nvda
+from handler import *
 from l10n import *
+
 if not language:
 	def _(s):
 		return s
 
 # begin wxGlade: dependencies
 import gettext
+
 # end wxGlade
 
 # begin wxGlade: extracode
@@ -88,9 +91,9 @@ class SubprocessDialog(wx.Dialog):
 		self.Close()
 # end of class SubprocessDialog
 
-class ListContext(wx.Menu):
+class ListContextMenu(wx.Menu):
 	def __init__(self, parent):
-		super(ListContext, self).__init__()
+		super(ListContextMenu, self).__init__()
 		self.parent = parent
 
 		if doc.pages and self.parent.GetSelection() > 0:
@@ -214,6 +217,7 @@ class AlertFileExistsDialog(wx.Dialog):
 		self.Close()
 		event.Skip()
 # end of class AlertFileExistsDialog
+
 class alertSaveDocumentDialog(wx.Dialog):
 	def __init__(self, *args, **kwds):
 		# begin wxGlade: alertSaveDocumentDialog.__init__
@@ -260,6 +264,7 @@ class alertSaveDocumentDialog(wx.Dialog):
 		self.Hide()
 		event.Skip()
 # end of class alertSaveDocumentDialog
+
 class ScanSettingsDialog(wx.Dialog):
 	def __init__(self, *args, **kwds):
 		# begin wxGlade: ScanSettingsDialog.__init__
@@ -311,8 +316,8 @@ class ScanSettingsDialog(wx.Dialog):
 
 		self.Layout()
 		# end wxGlade
-
 # end of class ScanSettingsDialog
+
 class MainFrame(wx.Frame):
 	def __init__(self, *args, **kwds):
 		# begin wxGlade: MainFrame.__init__
@@ -469,11 +474,17 @@ class MainFrame(wx.Frame):
 			if self.frame_menubar.FindItem(3)[0].Enabled:
 				self.onMenuExport(event)
 		elif hotkey(367, True): # control+pageDown
-			doc.pages.next()
-			nvda.message(_("Page {} of {}").format(doc.pages.index+1, len(doc.pages)))
+			if doc.pages:
+				doc.pages.next()
+				nvda.message(_("Page {} of {}").format(doc.pages.index+1, len(doc.pages)))
+			else:
+				nvda.message(_("The document is empty"))
 		elif hotkey(366, True): # control+pageUp
-			doc.pages.previous()
-			nvda.message(_("Page {} of {}").format(doc.pages.index+1, len(doc.pages)))
+			if doc.pages:
+				doc.pages.previous()
+				nvda.message(_("Page {} of {}").format(doc.pages.index+1, len(doc.pages)))
+			else:
+				nvda.message(_("The document is empty"))
 		elif hotkey(340): # F1
 			self.onHelpDoc(event)
 		else:
@@ -524,7 +535,7 @@ class MainFrame(wx.Frame):
 				return
 			elif res == wx.ID_YES:
 				self.onMenuFileSave(event)
-		doc.reset()
+		doc.clear()
 		nvda.message(_("New document {}").format(doc.name))
 		event.Skip()
 	
@@ -634,7 +645,7 @@ class MainFrame(wx.Frame):
 			return True
 		dlg.Destroy()
 		return False
-		# event.Skip()
+
 	def onMenuExport(self, event):  # wxGlade: MainFrame.<event_handler>
 		text = doc.exportText()
 		dlg = wx.FileDialog(
@@ -660,6 +671,7 @@ class MainFrame(wx.Frame):
 				wx.MessageBox(_("An error occurred and the images have not been saved"), _("Error"))
 		dlg.Destroy()
 		event.Skip()
+
 	def onMenuPrintText(self, event):  # wxGlade: MainFrame.<event_handler>
 		text = doc.exportText()
 		path = os.path.join(doc.tempFiles, "{}.txt".format(doc.name))
@@ -667,6 +679,7 @@ class MainFrame(wx.Frame):
 			f.write(text)
 		os.startfile(path, "print")
 		event.Skip()
+
 	def onMenuPrintImages(self, event):  # wxGlade: MainFrame.<event_handler>
 		wx.MessageBox("Event handler 'onMenuPrintImages' not implemented!", "Building")
 		event.Skip()
@@ -687,10 +700,17 @@ class MainFrame(wx.Frame):
 
 	def onHelpAbout(self, event):  # wxGlade: MainFrame.<event_handler>
 		wx.MessageBox(
-			"{}\nVersion {}\n(C) {} 2022 GPL 3.0\n{}".format(
+			"""{}\nVersion {}
+
+(C) {} 2022 GPL 3.0
+This application uses third party components.
+See the documentation for more details about their licenses.
+
+{}""".format(
 				appname, version, author, url),
 				_("About"))
 		event.Skip()
+
 	def onHelpLicense(self, event):  # wxGlade: MainFrame.<event_handler>
 		self.onHelpDoc(event, "license.html")
 		event.Skip()
@@ -722,7 +742,7 @@ class DialogPanel(wx.Panel):
 		self.Bind(wx.EVT_CONTEXT_MENU, self.onListContextMenu, self.list_box)
 
 	def onListContextMenu(self, event):
-		self.list_box.PopupMenu(ListContext(self.list_box), self.list_box.GetPosition())
+		self.list_box.PopupMenu(ListContextMenu(self.list_box), self.list_box.GetPosition())
 # end of class DialogPanel
 
 class App(wx.App):
